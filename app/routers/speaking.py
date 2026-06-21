@@ -17,10 +17,15 @@ from app.templating import render
 router = APIRouter()
 
 
+class StartIn(BaseModel):
+    level: str = ""
+
+
 class TurnIn(BaseModel):
     session_id: int
     history: list[dict]
     topic: str = ""
+    level: str = ""
 
 
 class TtsIn(BaseModel):
@@ -36,7 +41,7 @@ def speaking_page(request: Request, db: DBSession = Depends(get_db)):
 
 
 @router.post("/speaking/start")
-def speaking_start(request: Request, db: DBSession = Depends(get_db)):
+def speaking_start(data: StartIn, request: Request, db: DBSession = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return JSONResponse({"error": "auth"}, status_code=401)
@@ -50,7 +55,7 @@ def speaking_start(request: Request, db: DBSession = Depends(get_db)):
 
     seed = [{"role": "user", "content": "Let's begin the lesson."}]
     try:
-        result = speaking_service.chat_turn(db, user, conv.id, seed)
+        result = speaking_service.chat_turn(db, user, conv.id, seed, level=data.level)
     except Exception as e:  # noqa: BLE001 — показываем человеку понятную ошибку
         return JSONResponse({"error": f"Не удалось обратиться к ИИ: {e}"}, status_code=502)
 
@@ -72,7 +77,8 @@ def speaking_turn(data: TurnIn, request: Request, db: DBSession = Depends(get_db
         return JSONResponse({"error": "Сессия не найдена"}, status_code=404)
 
     try:
-        result = speaking_service.chat_turn(db, user, conv.id, data.history, data.topic)
+        result = speaking_service.chat_turn(db, user, conv.id, data.history,
+                                            data.topic, data.level)
     except Exception as e:  # noqa: BLE001
         return JSONResponse({"error": f"Ошибка ИИ: {e}"}, status_code=502)
     return result

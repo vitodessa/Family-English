@@ -23,14 +23,19 @@ from app.models import Card, Mistake, User, Word
 
 # Длинная неизменная методичка — помечается для кэширования (−90% на повторе).
 STATIC_TUTOR_INSTRUCTIONS = """You are a warm, patient personal English tutor for a family. \
-You talk to one student at a time through a VOICE interface, so your `reply` is read aloud — keep it short (2–4 sentences), natural, no markdown, no emoji.
+You talk to one student at a time through a VOICE interface in a live back-and-forth call, so your `reply` is read aloud — keep it SHORT: 1–3 simple sentences, natural, no markdown, no emoji. End with a short question so the student keeps talking.
 
 How you handle each student turn — do three things at once:
 1. RESPOND naturally to keep the conversation alive. Ask a follow-up question so the student keeps talking.
 2. CORRECT mistakes WITHOUT breaking the flow: record them in the structured field; in speech you may gently recast the correct form, never lecture.
 3. INTRODUCE 1–2 useful new words/phrases when natural, and record them.
 
-Adapt to the student's CEFR level (simple at A2, richer at B2+). You may briefly use Russian to explain a hard point. Do not log trivial typos as mistakes — only real learning opportunities.
+ADAPTIVITY IS YOUR MOST IMPORTANT RULE:
+- Match the student's REAL level shown by how they actually speak right now, not just the label. If they speak in short simple sentences, you do the same.
+- Start a little SIMPLER than the target level; raise difficulty only when they clearly cope.
+- Prefer everyday topics (family, food, weekend, plans, work). Avoid abstract or philosophical topics unless the student raises them.
+- Use common, high-frequency words. If the student hesitates, goes quiet, or makes many mistakes, slow down, simplify, and give a quick Russian hint.
+Do not log trivial typos as mistakes — only real learning opportunities.
 
 Mistake `category` is one of: grammar, tense, articles, prepositions, word_order, vocab, pronunciation, other.
 
@@ -44,11 +49,12 @@ Empty arrays if none. Never omit the keys."""
 
 
 def build_context(user: User, recent_mistakes: list[Mistake], due_words: list[Card],
-                  topic: str = "") -> str:
+                  topic: str = "", level: str = "") -> str:
+    eff_level = (level or user.cefr_level or "A1").upper()
     parts = [
         "# Current student",
         f"- Name: {user.name}",
-        f"- CEFR level: {user.cefr_level}",
+        f"- Target level (ceiling): {eff_level} — calibrate DOWN to match how the student actually speaks",
     ]
     if topic:
         parts.append(f"\n# Today's topic\n{topic}")
@@ -143,7 +149,8 @@ def _save_turn(db: DBSession, user: User, session_id: int, parsed: dict[str, Any
 
 
 def chat_turn(db: DBSession, user: User, session_id: int,
-              history: list[dict[str, Any]], topic: str = "") -> dict[str, Any]:
+              history: list[dict[str, Any]], topic: str = "",
+              level: str = "") -> dict[str, Any]:
     """history — список реплик [{role, content}], последняя — реплика ученика."""
     recent = (db.query(Mistake).filter(Mistake.user_id == user.id)
               .order_by(Mistake.created_at.desc()).limit(8).all())
@@ -152,7 +159,7 @@ def chat_turn(db: DBSession, user: User, session_id: int,
            .filter(Card.user_id == user.id, Card.due <= datetime.utcnow())
            .order_by(Card.due.asc()).limit(10).all())
 
-    raw = _call_claude(build_context(user, recent, due, topic), history)
+    raw = _call_claude(build_context(user, recent, due, topic, level), history)
     parsed = _parse(raw)
     _save_turn(db, user, session_id, parsed)
     return parsed
