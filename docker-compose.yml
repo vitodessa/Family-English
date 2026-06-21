@@ -12,6 +12,12 @@ services:
       INITIAL_CARDS: ${INITIAL_CARDS:-20}
       # По умолчанию SQLite на постоянном томе. Для PostgreSQL — задать DATABASE_URL.
       DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/family.db}
+      # Speaking — мозг (Claude) и голос (ElevenLabs). Значения из .env.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID:-21m00Tcm4TlvDq8ikWAM}
+      ELEVENLABS_MODEL: ${ELEVENLABS_MODEL:-eleven_turbo_v2_5}
     volumes:
       - family_db:/app/data   # данные переживают пересборку контейнера
 
