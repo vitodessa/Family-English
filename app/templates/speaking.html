@@ -18,6 +18,13 @@
         {% endfor %}
       </select>
     </label>
+    <label>Скорость:
+      <select id="speed">
+        <option value="0.65">🐢 Очень медленно</option>
+        <option value="0.8" selected>🚶 Медленно</option>
+        <option value="1.0">🏃 Обычно</option>
+      </select>
+    </label>
     <span class="muted">Говори естественно — кнопку жать не нужно. Лучше всего в Chrome.</span>
   </div>
 
@@ -26,6 +33,7 @@
 
   <div class="cta" style="justify-content:center">
     <button class="btn primary big-btn" id="startBtn">Начать разговор</button>
+    <button class="btn" id="repeatBtn" style="display:none">🔁 Повторить</button>
     <button class="btn" id="pauseBtn" style="display:none">⏸ Пауза</button>
     <button class="btn" id="endBtn" style="display:none">Завершить</button>
   </div>
@@ -47,8 +55,10 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const chat=document.getElementById('chat'), statusEl=document.getElementById('status');
 const startBtn=document.getElementById('startBtn'), pauseBtn=document.getElementById('pauseBtn');
 const endBtn=document.getElementById('endBtn'), levelSel=document.getElementById('level');
+const speedSel=document.getElementById('speed'), repeatBtn=document.getElementById('repeatBtn');
 
-let sessionId=null, history=[], rec=null, running=false;
+let sessionId=null, history=[], rec=null, running=false, lastReply='';
+function curSpeed(){ return parseFloat(speedSel.value)||1.0; }
 
 function addMsg(text, who){
   const d=document.createElement('div'); d.className='msg '+who; d.textContent=text;
@@ -63,9 +73,9 @@ function addNotes(parsed){
   chat.appendChild(d); d.scrollIntoView({block:'end'});
 }
 
-// Озвучка: ElevenLabs, при сбое — голос браузера. Promise завершается, когда звук доиграл.
+// Озвучка: ElevenLabs со скоростью; при сбое — голос браузера (тоже со скоростью).
 function speakBrowser(text, done){
-  try{ const u=new SpeechSynthesisUtterance(text); u.lang='en-US';
+  try{ const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=curSpeed();
        u.onend=done; u.onerror=done; speechSynthesis.cancel(); speechSynthesis.speak(u); }
   catch(e){ done&&done(); }
 }
@@ -73,7 +83,8 @@ function speak(text){
   return new Promise(async (resolve)=>{
     if(!text){ resolve(); return; }
     try{
-      const r=await fetch('/speaking/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+      const r=await fetch('/speaking/tts',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text, speed:curSpeed()})});
       if(r.ok){ const a=new Audio(URL.createObjectURL(await r.blob()));
                 a.onended=resolve; a.onerror=()=>speakBrowser(text,resolve); a.play(); return; }
     }catch(e){}
@@ -82,7 +93,7 @@ function speak(text){
 }
 
 async function handleReply(parsed){
-  if(parsed.reply){ addMsg(parsed.reply,'ai'); history.push({role:'assistant',content:parsed.reply}); }
+  if(parsed.reply){ lastReply=parsed.reply; addMsg(parsed.reply,'ai'); history.push({role:'assistant',content:parsed.reply}); }
   addNotes(parsed);
   statusEl.textContent='🗣 Отвечает…';
   await speak(parsed.reply||'');   // ждём, пока договорит, и только потом слушаем (без эха)
@@ -123,9 +134,16 @@ startBtn.onclick=async()=>{
     const d=await r.json();
     if(d.error){ statusEl.textContent=d.error; startBtn.disabled=false; return; }
     sessionId=d.session_id; history=[{role:'user',content:"Let's begin the lesson."}]; running=true;
-    startBtn.style.display='none'; pauseBtn.style.display=''; endBtn.style.display='';
+    startBtn.style.display='none'; repeatBtn.style.display=''; pauseBtn.style.display=''; endBtn.style.display='';
     await handleReply(d); startListening();
   }catch(e){ statusEl.textContent='Ошибка соединения.'; startBtn.disabled=false; }
+};
+
+repeatBtn.onclick=async()=>{           // переслушать последнюю фразу (на текущей скорости)
+  if(!lastReply) return;
+  if(rec) try{rec.abort()}catch(e){}
+  await speak(lastReply);
+  if(running) startListening();
 };
 
 pauseBtn.onclick=()=>{

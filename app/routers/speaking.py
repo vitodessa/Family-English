@@ -30,6 +30,7 @@ class TurnIn(BaseModel):
 
 class TtsIn(BaseModel):
     text: str
+    speed: float = 1.0
 
 
 @router.get("/speaking")
@@ -92,7 +93,7 @@ def speaking_tts(data: TtsIn, request: Request, db: DBSession = Depends(get_db))
     if not speaking_enabled():
         return JSONResponse({"error": "Модуль не настроен"}, status_code=503)
     try:
-        audio = speaking_service.text_to_speech(data.text[:1500])
+        audio = speaking_service.text_to_speech(data.text[:1500], data.speed)
     except Exception as e:  # noqa: BLE001
         return JSONResponse({"error": f"Ошибка озвучки: {e}"}, status_code=502)
     return Response(content=audio, media_type="audio/mpeg")

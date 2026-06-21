@@ -165,14 +165,18 @@ def chat_turn(db: DBSession, user: User, session_id: int,
     return parsed
 
 
-def text_to_speech(text: str) -> bytes:
-    """Озвучка реплики натуральным голосом (ElevenLabs). Возвращает mp3-байты."""
+def text_to_speech(text: str, speed: float = 1.0) -> bytes:
+    """Озвучка реплики натуральным голосом (ElevenLabs). Возвращает mp3-байты.
+
+    speed — скорость речи (0.7 медленно … 1.2 быстро), ElevenLabs ограничивает диапазон.
+    """
+    speed = max(0.7, min(1.2, float(speed)))
     resp = httpx.post(
         f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
         params={"output_format": "mp3_44100_128"},
         headers={"xi-api-key": ELEVENLABS_API_KEY, "content-type": "application/json"},
         json={"text": text, "model_id": ELEVENLABS_MODEL,
-              "voice_settings": {"stability": 0.4, "similarity_boost": 0.7}},
+              "voice_settings": {"stability": 0.4, "similarity_boost": 0.7, "speed": speed}},
         timeout=60,
     )
     resp.raise_for_status()
