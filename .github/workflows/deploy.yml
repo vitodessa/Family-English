@@ -1,0 +1,63 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sanity:
+    name: Проверка сборки
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Установка зависимостей
+        run: pip install -r requirements.txt
+      - name: Импорт приложения (синтаксис/импорты)
+        run: python -c "from app.main import app; print('OK, роутов:', len(app.routes))"
+
+  deploy:
+    name: Деплой
+    needs: sanity
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Деплой по SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/family-english
+
+            echo "==> Обновляю код..."
+            git pull origin main
+
+            echo "==> Обновляю Nginx-конфиг..."
+            cp nginx/family-english.conf /etc/nginx/sites-available/family-english
+            ln -sf /etc/nginx/sites-available/family-english /etc/nginx/sites-enabled/family-english
+            nginx -t && systemctl reload nginx
+
+            echo "==> Пересобираю и перезапускаю контейнер..."
+            docker compose up -d --build --remove-orphans
+
+            echo "==> Жду готовности..."
+            for i in $(seq 1 24); do
+              if curl -sf http://localhost:8090/healthz > /dev/null 2>&1; then
+                echo "Поднялся за ${i}×5s"; OK=1; break
+              fi
+              echo "  попытка $i/24..."; sleep 5
+            done
+            if [ "$OK" != "1" ]; then
+              echo "!! Не поднялся:"; docker compose ps; docker compose logs --tail=120 family_english; exit 1
+            fi
+
+            echo "==> Дымовой тест (внутри контейнера)..."
+            docker compose exec -T family_english python smoke_test.py http://localhost:8090
+
+            echo "==> Деплой завершён."
