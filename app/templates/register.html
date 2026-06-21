@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="form-card">
+  <h2>Новый профиль</h2>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post" action="/register">
+    <label>Имя
+      <input name="name" autocomplete="username" required autofocus>
+    </label>
+    <label>Пароль
+      <input name="password" type="password" autocomplete="new-password" required>
+    </label>
+    <label>Уровень английского
+      <select name="cefr_level">
+        {% for lvl in levels %}<option value="{{ lvl }}">{{ lvl }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="btn primary wide" type="submit">Создать профиль</button>
+  </form>
+  <p class="muted">Уже есть профиль? <a href="/login">Войти</a></p>
+</div>
+{% endblock %}

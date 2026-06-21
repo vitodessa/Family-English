@@ -1,0 +1,19 @@
+services:
+  family_english:
+    build: .
+    container_name: family_english
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_NAME: ${ADMIN_NAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      INITIAL_CARDS: ${INITIAL_CARDS:-20}
+      # По умолчанию SQLite на постоянном томе. Для PostgreSQL — задать DATABASE_URL.
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/family.db}
+    volumes:
+      - family_db:/app/data   # данные переживают пересборку контейнера
+
+volumes:
+  family_db:

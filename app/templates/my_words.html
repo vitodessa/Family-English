@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Мои слова — {{ app_title }}{% endblock %}
+{% block content %}
+<h1>Добавить слова</h1>
+<p class="muted">Из урока EnglishDom — по одному слову в строке, в формате
+   <code>слово | перевод</code>. Каждое станет карточкой на повторение.</p>
+
+{% if added is defined %}
+  <p class="ok">✓ Добавлено карточек: {{ added }}</p>
+{% endif %}
+
+<div class="form-card" style="max-width:560px;margin-left:0">
+  <form method="post" action="/my-words">
+    <label>Слова
+      <textarea name="words" rows="10" placeholder="commute | ездить на работу
+achieve | достигать
+on purpose | намеренно"></textarea>
+    </label>
+    <button class="btn primary" type="submit">Добавить в мои карточки</button>
+  </form>
+</div>
+
+<p class="muted">Всего карточек у тебя: <b>{{ total }}</b></p>
+<div class="cta" style="justify-content:flex-start">
+  <a class="btn" href="/dashboard">← В кабинет</a>
+  <a class="btn primary" href="/study">Учить →</a>
+</div>
+{% endblock %}

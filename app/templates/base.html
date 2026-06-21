@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_title }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/">🌍 {{ app_title }}</a>
+    <nav>
+      {% if current_user %}
+        <a href="/dashboard">Кабинет</a>
+        <a href="/study">Учить</a>
+        {% if current_user.is_admin %}<a href="/admin">Админ</a>{% endif %}
+        <span class="who">{{ current_user.name }}</span>
+        <a class="ghost" href="/logout">Выйти</a>
+      {% else %}
+        <a href="/login">Войти</a>
+        <a class="ghost" href="/register">Регистрация</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

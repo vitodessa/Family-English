@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Кабинет — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Привет, {{ current_user.name }}!</h1>
+  <p class="muted">Уровень {{ current_user.cefr_level }}</p>
+</section>
+
+<section class="stats">
+  <div class="stat big {% if due_count %}accent{% endif %}">
+    <div class="num">{{ due_count }}</div>
+    <div class="lbl">к повторению сейчас</div>
+  </div>
+  <div class="stat"><div class="num">{{ total_cards }}</div><div class="lbl">всего слов</div></div>
+  <div class="stat"><div class="num">{{ learned }}</div><div class="lbl">в долгой памяти</div></div>
+  <div class="stat"><div class="num">{{ retention }}%</div><div class="lbl">удержание</div></div>
+</section>
+
+<section class="goal">
+  <div class="goal-row">
+    <span>Дневная цель: {{ reviews_today }} / {{ daily_goal }}</span>
+    <span>{{ goal_progress }}%</span>
+  </div>
+  <div class="bar"><div class="bar-fill" style="width: {{ goal_progress }}%"></div></div>
+</section>
+
+<div class="cta">
+  {% if due_count %}
+    <a class="btn primary big-btn" href="/study">Учить {{ due_count }} карточек →</a>
+  {% else %}
+    <p class="done">🎉 На сегодня всё повторено. Возвращайся позже!</p>
+    <a class="btn" href="/study">Всё равно открыть учёбу</a>
+  {% endif %}
+  <a class="btn" href="/my-words">+ Добавить слова из урока</a>
+</div>
+{% endblock %}

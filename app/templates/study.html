@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Учёба — {{ app_title }}{% endblock %}
+{% block content %}
+{% if not card %}
+  <div class="form-card center">
+    <h2>🎉 Готово!</h2>
+    <p class="muted">Карточек к повторению сейчас нет.</p>
+    <a class="btn primary" href="/dashboard">В кабинет</a>
+  </div>
+{% else %}
+  <p class="muted center">Осталось к повторению: {{ due_count }}</p>
+
+  <div class="flash">
+    <div class="flash-front">{{ card.front }}</div>
+    <div class="flash-back" id="back" hidden>{{ card.back }}</div>
+  </div>
+
+  <div class="center">
+    <button class="btn primary big-btn" id="show-btn" type="button"
+            onclick="document.getElementById('back').hidden=false;this.hidden=true;document.getElementById('rate').hidden=false;">
+      Показать ответ
+    </button>
+  </div>
+
+  <form class="rate" id="rate" method="post" action="/review" hidden>
+    <input type="hidden" name="card_id" value="{{ card.id }}">
+    <button class="btn rate-1" name="rating" value="1" type="submit">Снова</button>
+    <button class="btn rate-2" name="rating" value="2" type="submit">Трудно</button>
+    <button class="btn rate-3" name="rating" value="3" type="submit">Хорошо</button>
+    <button class="btn rate-4" name="rating" value="4" type="submit">Легко</button>
+  </form>
+{% endif %}
+{% endblock %}
