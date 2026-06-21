@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Разговор — {{ app_title }}{% endblock %}
+{% block content %}
+<h1>Разговор с AI</h1>
+
+{% if not enabled %}
+  <div class="form-card">
+    <p class="muted">Модуль голосового собеседника пока не настроен — не заданы ключи
+       <code>ANTHROPIC_API_KEY</code> и <code>ELEVENLABS_API_KEY</code> на сервере.</p>
+    <a class="btn" href="/dashboard">← В кабинет</a>
+  </div>
+{% else %}
+  <p class="muted">Нажми «Говорить», скажи фразу по-английски — собеседник ответит голосом.
+     Новые слова и ошибки сами попадут в твои карточки.</p>
+
+  <div id="chat" class="chat"></div>
+  <p id="status" class="muted center" style="min-height:1.4em"></p>
+
+  <div class="cta" style="justify-content:center">
+    <button class="btn primary" id="startBtn">Начать разговор</button>
+    <button class="btn primary big-btn" id="talkBtn" style="display:none">🎤 Говорить</button>
+    <button class="btn" id="endBtn" style="display:none">Завершить</button>
+  </div>
+
+<style>
+  .chat{max-width:640px;margin:18px auto;display:flex;flex-direction:column;gap:10px}
+  .msg{padding:10px 14px;border-radius:14px;max-width:85%;line-height:1.4}
+  .msg.ai{background:var(--card);border:1px solid var(--line);align-self:flex-start}
+  .msg.me{background:var(--primary);color:#fff;align-self:flex-end}
+  .notes{font-size:.85rem;color:var(--muted);align-self:flex-start;max-width:85%}
+  .notes b{color:var(--ink)}
+  .notes .fix{color:var(--again)}
+  .notes .voc{color:var(--good)}
+</style>
+
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const chat = document.getElementById('chat');
+const statusEl = document.getElementById('status');
+const startBtn = document.getElementById('startBtn');
+const talkBtn = document.getElementById('talkBtn');
+const endBtn = document.getElementById('endBtn');
+
+let sessionId = null;
+let history = [];      // [{role, content}]
+let busy = false;
+
+function addMsg(text, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.textContent = text;
+  chat.appendChild(d);
+  chat.scrollIntoView(false);
+}
+function addNotes(parsed){
+  const bits = [];
+  (parsed.mistakes||[]).forEach(m =>
+    bits.push(`<span class="fix">✏️ ${m.original} → <b>${m.correction}</b></span> <i>${m.explanation||''}</i>`));
+  (parsed.new_vocab||[]).forEach(v =>
+    bits.push(`<span class="voc">➕ <b>${v.word}</b> — ${v.translation}</span>`));
+  if(!bits.length) return;
+  const d = document.createElement('div');
+  d.className = 'notes';
+  d.innerHTML = bits.join('<br>');
+  chat.appendChild(d);
+  chat.scrollIntoView(false);
+}
+async function speak(text){
+  try{
+    const r = await fetch('/speaking/tts', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+    if(!r.ok) return;
+    const blob = await r.blob();
+    new Audio(URL.createObjectURL(blob)).play();
+  }catch(e){/* голос не критичен — текст уже есть */}
+}
+function handleReply(parsed){
+  if(parsed.reply){ addMsg(parsed.reply, 'ai'); history.push({role:'assistant', content: parsed.reply}); speak(parsed.reply); }
+  addNotes(parsed);
+}
+
+startBtn.onclick = async () => {
+  if(!SR){ statusEl.textContent = 'Браузер не поддерживает распознавание речи — используй Chrome.'; }
+  startBtn.disabled = true; statusEl.textContent = 'Подключаюсь…';
+  try{
+    const r = await fetch('/speaking/start', {method:'POST'});
+    const data = await r.json();
+    if(data.error){ statusEl.textContent = data.error; startBtn.disabled=false; return; }
+    sessionId = data.session_id;
+    history = [{role:'user', content:"Let's begin the lesson."}];
+    handleReply(data);
+    startBtn.style.display='none'; talkBtn.style.display=''; endBtn.style.display='';
+    statusEl.textContent = SR ? 'Нажми «Говорить» и скажи фразу.' : 'Распознавание недоступно в этом браузере.';
+  }catch(e){ statusEl.textContent='Ошибка соединения.'; startBtn.disabled=false; }
+};
+
+talkBtn.onclick = () => {
+  if(busy || !SR) return;
+  const rec = new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
+  statusEl.textContent='🎧 Слушаю… говори';
+  talkBtn.disabled=true;
+  rec.onresult = async (e) => {
+    const text = e.results[0][0].transcript;
+    addMsg(text, 'me'); history.push({role:'user', content:text});
+    busy=true; statusEl.textContent='Думаю…';
+    try{
+      const r = await fetch('/speaking/turn', {method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({session_id:sessionId, history})});
+      const data = await r.json();
+      if(data.error){ statusEl.textContent=data.error; }
+      else { handleReply(data); statusEl.textContent='Нажми «Говорить», чтобы ответить.'; }
+    }catch(e){ statusEl.textContent='Ошибка соединения.'; }
+    busy=false; talkBtn.disabled=false;
+  };
+  rec.onerror = (e) => { statusEl.textContent='Не расслышал, попробуй ещё раз.'; talkBtn.disabled=false; };
+  rec.onend = () => { if(!busy) talkBtn.disabled=false; };
+  rec.start();
+};
+
+endBtn.onclick = async () => {
+  if(sessionId) await fetch('/speaking/end', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body: JSON.stringify({session_id:sessionId, history})});
+  window.location = '/dashboard';
+};
+</script>
+{% endif %}
+{% endblock %}

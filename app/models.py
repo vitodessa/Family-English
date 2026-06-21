@@ -94,3 +94,34 @@ class LearningEvent(Base):
     elapsed_days = Column(Integer)
     scheduled_days = Column(Integer)
     reviewed_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Session(Base):
+    """Сеанс любого модуля (общая модель). Speaking — первый, кто пишет сюда."""
+
+    __tablename__ = "sessions"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    module = Column(String, default="speaking")
+    topic = Column(String, default="")
+    summary = Column(Text, default="")
+    started_at = Column(DateTime, default=datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+
+
+class Mistake(Base):
+    """Ошибка ученика с категорией. Появляется со Speaking/Writing (см. PRODUCT_SPEC)."""
+
+    __tablename__ = "mistakes"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=True)
+    grammar_topic_id = Column(Integer, ForeignKey("grammar_topics.id"), nullable=True)
+    original = Column(Text, nullable=False)
+    correction = Column(Text, nullable=False)
+    explanation = Column(Text, default="")
+    category = Column(String, index=True)  # grammar/tense/articles/prepositions/...
+    source_module = Column(String, default="speaking")
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
