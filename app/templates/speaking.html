@@ -65,14 +65,24 @@ function addNotes(parsed){
   chat.appendChild(d);
   chat.scrollIntoView(false);
 }
+function speakBrowser(text){           // запасной бесплатный голос браузера
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){/* голос не критичен — текст уже есть */}
+}
 async function speak(text){
   try{
     const r = await fetch('/speaking/tts', {method:'POST',
       headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
-    if(!r.ok) return;
-    const blob = await r.blob();
-    new Audio(URL.createObjectURL(blob)).play();
-  }catch(e){/* голос не критичен — текст уже есть */}
+    if(r.ok){
+      const blob = await r.blob();
+      new Audio(URL.createObjectURL(blob)).play();
+      return;
+    }
+  }catch(e){/* перейдём на браузерный голос */}
+  speakBrowser(text);                  // ElevenLabs недоступен (нет тарифа) → браузер
 }
 function handleReply(parsed){
   if(parsed.reply){ addMsg(parsed.reply, 'ai'); history.push({role:'assistant', content: parsed.reply}); speak(parsed.reply); }
