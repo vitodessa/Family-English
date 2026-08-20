@@ -140,5 +140,8 @@ class ContentItem(Base):
     body = Column(Text, nullable=False)
     cefr_level = Column(String, index=True)
     topic = Column(String, default="")
+    # Глоссарий всех слов текста {слово: перевод} (JSON) — строится один раз,
+    # чтобы наведение в ридере было мгновенным, без вызова AI на каждое слово.
+    glossary = Column(Text, default="")
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)

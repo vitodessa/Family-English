@@ -7,9 +7,9 @@
 </div>
 <h1>{{ item.title }}</h1>
 
-<div id="text" class="reader-text">{{ item.body }}</div>
+<div id="text" class="reader-text" data-glossary='{{ item.glossary or "{}" }}'>{{ item.body }}</div>
 <p class="muted center" style="margin-top:16px">
-  Наведи на слово — увидишь перевод. Кликни — слово уйдёт в карточки на запоминание.
+  Веди мышкой по словам — перевод всплывает сразу. Кликни — слово уйдёт в карточки на запоминание.
 </p>
 
 <div id="tip" class="wtip" hidden>
@@ -22,6 +22,9 @@
 (function(){
   const textEl = document.getElementById('text');
   const body = textEl.textContent.trim();
+  let gloss = {};
+  try { gloss = JSON.parse(textEl.dataset.glossary || '{}'); } catch(e) {}
+
   // разбиваем текст на слова-спаны (безопасно, через textContent)
   const raw = textEl.textContent;
   textEl.textContent = '';
@@ -33,8 +36,8 @@
   const tip=document.getElementById('tip'), tipTr=document.getElementById('tip-tr'),
         tipAudio=document.getElementById('tip-audio'), toast=document.getElementById('toast');
   const canHover = window.matchMedia('(hover: hover)').matches;
-  const cache = {};                 // слово → перевод (чтобы не дёргать API повторно)
-  let showTimer=null, hideTimer=null, shownFor=null, tipWordText='';
+  const cache = Object.assign({}, gloss);   // предзагруженный глоссарий: перевод мгновенный
+  let hideTimer=null, shownFor=null, tipWordText='';
 
   function speak(w){ try{ const u=new SpeechSynthesisUtterance(w); u.lang='en-US';
     speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
@@ -43,29 +46,31 @@
   function flash(msg){ toast.textContent=msg; toast.classList.add('show');
     clearTimeout(flash._t); flash._t=setTimeout(()=>toast.classList.remove('show'), 1600); }
 
+  const key = w => w.toLowerCase();
+
   function showTip(span){
-    const word = span.textContent; tipWordText = word;
-    tipTr.textContent = (cache[word] !== undefined && cache[word] !== null) ? (cache[word] || '—') : '…';
+    const word = span.textContent, k = key(word); tipWordText = word;
+    const have = cache[k];
+    tipTr.textContent = (have !== undefined && have !== null) ? (have || '—') : '…';
     tip.hidden = false; shownFor = span;
     const r = span.getBoundingClientRect();
     tip.style.left = Math.max(8, window.scrollX + r.left) + 'px';
     tip.style.top  = (window.scrollY + r.bottom + 6) + 'px';
-    if(cache[word] === undefined){
-      cache[word] = null;   // «в полёте»
+    if(cache[k] === undefined){          // слова нет в глоссарии — разово подтянем
+      cache[k] = null;
       fetch('/reading/translate', {method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({word, sentence: body})})
         .then(r => r.json()).then(d => {
-          cache[word] = d.error ? '' : (d.translation || '');
-          if(shownFor === span) tipTr.textContent = cache[word] || '—';
-        }).catch(() => { cache[word] = ''; if(shownFor === span) tipTr.textContent = 'ошибка'; });
+          cache[k] = d.error ? '' : (d.translation || '');
+          if(shownFor === span) tipTr.textContent = cache[k] || '—';
+        }).catch(() => { cache[k] = ''; if(shownFor === span) tipTr.textContent = 'ошибка'; });
     }
   }
   function hideTip(){ tip.hidden = true; shownFor = null; }
 
   function addWord(span){
-    const word = span.textContent;
-    const tr = cache[word];
-    if(!tr){ showTip(span); return; }   // перевода ещё нет — сперва покажем
+    const word = span.textContent, tr = cache[key(word)];
+    if(!tr){ showTip(span); return; }
     fetch('/reading/add-word', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({word, translation: tr})})
       .then(r => r.json()).then(d => {
@@ -75,18 +80,17 @@
   }
 
   if(canHover){
-    // десктоп: наведение — перевод, клик — в карточки
+    // десктоп: перевод всплывает МГНОВЕННО по наведению (локальный поиск), клик — в карточки
     textEl.addEventListener('mouseover', e => {
       if(!e.target.classList.contains('w')) return;
-      clearTimeout(hideTimer); clearTimeout(showTimer);
-      const span = e.target; showTimer = setTimeout(() => showTip(span), 150);
+      clearTimeout(hideTimer); showTip(e.target);
     });
     textEl.addEventListener('mouseout', e => {
       if(!e.target.classList.contains('w')) return;
-      clearTimeout(showTimer); hideTimer = setTimeout(hideTip, 220);
+      hideTimer = setTimeout(hideTip, 180);
     });
     tip.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-    tip.addEventListener('mouseleave', () => { hideTimer = setTimeout(hideTip, 220); });
+    tip.addEventListener('mouseleave', () => { hideTimer = setTimeout(hideTip, 180); });
     textEl.addEventListener('click', e => {
       if(e.target.classList.contains('w')) addWord(e.target);
     });
@@ -94,7 +98,7 @@
     // тач: первый тап — перевод, повторный тап того же слова — в карточки
     textEl.addEventListener('click', e => {
       if(!e.target.classList.contains('w')) return;
-      if(shownFor === e.target && cache[e.target.textContent]) addWord(e.target);
+      if(shownFor === e.target && cache[key(e.target.textContent)]) addWord(e.target);
       else showTip(e.target);
     });
     document.addEventListener('click', e => {

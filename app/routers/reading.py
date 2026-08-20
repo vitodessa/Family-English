@@ -1,8 +1,10 @@
 """Чтение: список текстов, генерация под уровень, ридер с тап-переводом.
 
-Тап по слову → перевод в контексте (Claude) → кнопка «в карточки» дергает ту же
-логику, что и ручной ввод слов (единая память).
+Перевод всех слов текста строится один раз (глоссарий) → наведение мгновенное.
+Клик по слову → «в карточки» через ту же логику, что и ручной ввод (единая память).
 """
+
+import json
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -73,6 +75,11 @@ def reading_generate(
 
     item = ContentItem(title=title, body=body, cefr_level=level,
                        topic=topic.strip(), created_by=user.id)
+    # Глоссарий сразу при генерации — чтобы ридер открылся уже готовым к мгновенному переводу.
+    try:
+        item.glossary = json.dumps(reading_service.build_glossary(body), ensure_ascii=False)
+    except Exception:  # noqa: BLE001 — глоссарий не критичен, соберём лениво при открытии
+        item.glossary = ""
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -87,6 +94,13 @@ def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
     item = db.query(ContentItem).filter(ContentItem.id == item_id).first()
     if not item:
         return RedirectResponse("/reading", status_code=302)
+    # Старые тексты без глоссария — соберём один раз при первом открытии.
+    if not item.glossary and reading_enabled():
+        try:
+            item.glossary = json.dumps(reading_service.build_glossary(item.body), ensure_ascii=False)
+            db.commit()
+        except Exception:  # noqa: BLE001
+            pass
     return render(request, "reading_item.html", db=db, item=item, enabled=reading_enabled())
 
 
