@@ -99,8 +99,10 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
 
 /* study quiz (активное припоминание) */
 .quiz{max-width:600px;margin:10px auto}
-.quiz .hint{text-align:center;color:var(--muted);margin:14px 0 2px}
-.quiz .prompt{font-size:2.2rem;font-weight:700;text-align:center;margin:6px 0 22px}
+.q-emoji{font-size:4.4rem;line-height:1;text-align:center;margin:8px 0 2px}
+.quiz .hint{text-align:center;color:var(--muted);margin:10px 0 2px}
+.quiz .prompt{font-size:2.2rem;font-weight:700;text-align:center;margin:6px 0 22px;
+  display:flex;align-items:center;justify-content:center;gap:12px}
 .opt{display:block;width:100%;text-align:left;padding:14px 18px;margin:10px 0;
   border:1px solid var(--line);border-radius:14px;background:var(--card);
   font-size:1.1rem;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}

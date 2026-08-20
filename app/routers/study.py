@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
+from app.emoji_map import emoji_for
 from app.fsrs_service import apply_review
 from app.models import Card, LearningEvent, Word
 from app.seed import top_up_deck
@@ -78,7 +79,8 @@ def _make_quiz(db: Session, card: Card) -> dict:
         "correct": correct,
         "options": options,
         "hint": hint,
-        "en_word": card.front,  # для озвучки английского слова после ответа
+        "en_word": card.front,       # для озвучки английского слова
+        "emoji": emoji_for(card.front),  # «картинка» слова, если есть
     }
 
 

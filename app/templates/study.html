@@ -10,9 +10,15 @@
 {% else %}
   <p class="muted center">Осталось к повторению: {{ due_count }}</p>
 
-  <div class="quiz" id="quiz" data-correct="{{ quiz.correct }}" data-word="{{ quiz.en_word }}">
+  <div class="quiz" id="quiz" data-correct="{{ quiz.correct }}"
+       data-word="{{ quiz.en_word }}" data-direction="{{ quiz.direction }}">
+    {% if quiz.emoji %}<div class="q-emoji">{{ quiz.emoji }}</div>{% endif %}
     <div class="hint">{{ quiz.hint }}</div>
-    <div class="prompt">{{ quiz.prompt }}</div>
+    <div class="prompt">
+      <span>{{ quiz.prompt }}</span>
+      <button type="button" id="audio" class="audio-btn" title="Послушать"
+              {% if quiz.direction == 'ru2en' %}hidden{% endif %}>🔊</button>
+    </div>
 
     <div id="options">
       {% for opt in quiz.options %}
@@ -23,7 +29,6 @@
     </div>
 
     <div class="quiz-foot">
-      <button type="button" id="audio" class="audio-btn" title="Послушать" hidden>🔊</button>
       <form method="post" action="/study/answer" id="next-form" hidden>
         <input type="hidden" name="card_id" value="{{ card.id }}">
         <input type="hidden" name="direction" value="{{ quiz.direction }}">
@@ -38,6 +43,7 @@
   const quiz = document.getElementById('quiz');
   const correct = quiz.dataset.correct;
   const word = quiz.dataset.word;
+  const ru2en = quiz.dataset.direction === 'ru2en';
   const opts = Array.from(document.querySelectorAll('.opt'));
   const audioBtn = document.getElementById('audio');
   const nextForm = document.getElementById('next-form');
@@ -45,8 +51,13 @@
   let answered = false;
 
   function speak(){
-    try{ const u = new SpeechSynthesisUtterance(word); u.lang='en-US';
-         speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){}
+    try{
+      const u = new SpeechSynthesisUtterance(word);
+      u.lang = 'en-US';
+      const en = (speechSynthesis.getVoices() || []).find(v => /^en/i.test(v.lang));
+      if(en) u.voice = en;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
   }
   audioBtn.onclick = speak;
 
@@ -57,17 +68,16 @@
     answered = true;
     const val = btn.dataset.val;
     const isOk = norm(val) === norm(correct);
-    // подсветить выбранный и правильный
     opts.forEach(b => {
       b.disabled = true;
       if(norm(b.dataset.val) === norm(correct)) b.classList.add('correct');
     });
-    if(!isOk){ btn.classList.add('wrong'); }
+    if(!isOk) btn.classList.add('wrong');
     btn.querySelector('.mark').textContent = isOk ? '✓' : '✗';
     chosenInput.value = val;
-    audioBtn.hidden = false;
+    if(ru2en) audioBtn.hidden = false;   // теперь можно услышать правильное слово
     nextForm.hidden = false;
-    if(isOk) speak();   // сразу услышать правильное произношение
+    speak();                              // всегда озвучиваем английское слово после ответа
   });
 
   // 1–3 с клавиатуры выбирают вариант, Enter — «Далі»
