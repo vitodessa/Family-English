@@ -131,9 +131,11 @@ async def lesson_test_submit(request: Request, db: Session = Depends(get_db)):
         results.append({"prompt": prompt, "answer": answer, "given": given, "ok": ok})
 
     touch_session(db, user.id, "lesson_test", f"Тест: {correct}/{n}")
-    # Урок завершён тестом — если всё пройдено, шлём отчёт родителю (один раз в день).
-    from app.report_service import maybe_send_report
+    # Урок завершён тестом — награда токенами (если всё пройдено) + отчёт родителю.
+    from app.report_service import lesson_complete, maybe_send_report
+    from app.token_service import award_lesson
+    tokens = award_lesson(db, user.id) if lesson_complete(db, user.id) else 0
     sent = maybe_send_report(db, user)
 
     return render(request, "lesson_test_result.html", db=db,
-                  results=results, correct=correct, total=n, report_sent=sent)
+                  results=results, correct=correct, total=n, report_sent=sent, tokens=tokens)

@@ -8,6 +8,7 @@ from app.config import CEFR_ORDER, reporting_enabled
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Card, LearningEvent, User, Word
+from app import token_service
 from app.report_service import build_daily_report, send_telegram
 from app.security import hash_password
 from app.seed import generate_cards_for_user, seed_words
@@ -38,6 +39,8 @@ def admin_page(request: Request, db: Session = Depends(get_db)):
                 "reviews": db.query(LearningEvent)
                 .filter(LearningEvent.user_id == u.id)
                 .count(),
+                "tokens": token_service.balance(db, u.id),
+                "tokens_month": token_service.earned_this_month(db, u.id),
             }
         )
 
@@ -57,6 +60,15 @@ def send_report(user_id: int, request: Request, db: Session = Depends(get_db)):
     target = db.query(User).filter(User.id == user_id).first()
     if target:
         send_telegram(build_daily_report(db, target))  # ручная отправка, сразу
+    return RedirectResponse("/admin", status_code=302)
+
+
+@router.post("/admin/cashout/{user_id}")
+def cashout(user_id: int, request: Request, db: Session = Depends(get_db)):
+    """Обмен токенов ученика на деньги: обнуляет баланс, пишет операцию в журнал."""
+    if not _require_admin(request, db):
+        return RedirectResponse("/login", status_code=302)
+    token_service.cashout(db, user_id)
     return RedirectResponse("/admin", status_code=302)
 
 

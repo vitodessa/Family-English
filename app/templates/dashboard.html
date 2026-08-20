@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Кабинет — {{ app_title }}{% endblock %}
 {% block content %}
-<section class="dash-head">
-  <h1>Привет, {{ current_user.name }}!</h1>
-  <p class="muted">Уровень {{ current_user.cefr_level }} · сегодня {{ reviews_today }} / {{ daily_goal }} повторений</p>
+<section class="dash-head dash-head-row">
+  <div>
+    <h1>Привет, {{ current_user.name }}!</h1>
+    <p class="muted">Уровень {{ current_user.cefr_level }} · сегодня {{ reviews_today }} / {{ daily_goal }} повторений</p>
+  </div>
+  <a class="token-chip" href="/tokens" title="Твои токены">🪙 {{ tokens }}</a>
 </section>
 
 <div class="lesson-banner">

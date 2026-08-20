@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Семья</h1>
 <table class="tbl">
-  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>Роль</th><th>Отчёт</th></tr></thead>
+  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>🪙 Токены</th><th>Роль</th><th>Отчёт</th></tr></thead>
   <tbody>
     {% for r in rows %}
     <tr>
@@ -11,6 +11,15 @@
       <td>{{ r.user.cefr_level }}</td>
       <td>{{ r.cards }}</td>
       <td>{{ r.reviews }}</td>
+      <td>
+        <b>{{ r.tokens }}</b> <span class="muted">(мес: {{ r.tokens_month }})</span>
+        {% if r.tokens > 0 %}
+        <form method="post" action="/admin/cashout/{{ r.user.id }}" style="margin:4px 0 0"
+              onsubmit="return confirm('Обменять {{ r.tokens }} токенов {{ r.user.name }} на деньги? Баланс обнулится.')">
+          <button class="btn ghost" type="submit" style="padding:4px 10px;font-size:.85rem">💵 Обменять</button>
+        </form>
+        {% endif %}
+      </td>
       <td>{{ "админ" if r.user.is_admin else "ученик" }}</td>
       <td>
         <form method="post" action="/admin/send-report/{{ r.user.id }}" style="margin:0">

@@ -20,6 +20,7 @@ from app.fsrs_service import apply_review
 from app.models import Card, LearningEvent, Word
 from app.seed import top_up_deck
 from app.templating import render
+from app.token_service import balance as token_balance
 
 router = APIRouter()
 
@@ -145,6 +146,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         reviews_today=reviews_today,
         daily_goal=goal,
         goal_progress=goal_progress,
+        tokens=token_balance(db, user.id),
     )
 
 

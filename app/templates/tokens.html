@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Токены — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/dashboard">← В кабинет</a></div>
+
+<div class="token-hero">
+  <div class="th-balance">🪙 {{ balance }}</div>
+  <div class="th-sub">токенов накоплено</div>
+  <div class="th-row">
+    <span>За месяц: <b>{{ month }}</b></span>
+    <span>🔥 Серия: <b>{{ streak }}</b> дн.</span>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h3 style="margin-top:0">Как заработать 🪙</h3>
+  <div class="earn">
+    <div>✅ Пройти <b>Урок дня</b> — <b>+25</b></div>
+    <div>🔥 <b>Серия дней</b> подряд — бонус = число дней</div>
+    <div>🎮 <b>Каждая игра</b> за день — <b>+3</b></div>
+    <div>🎯 <b>Победа в челлендже</b> — <b>+5</b></div>
+  </div>
+  <p class="muted" style="font-size:.85rem;margin-bottom:0">
+    Раз в месяц родитель обменивает токены на настоящие деньги. Учись каждый день — копи больше!
+  </p>
+</div>
+
+{% if history %}
+<h2 style="margin-top:24px">История</h2>
+<table class="tbl">
+  <tr><th>Когда</th><th>За что</th><th>🪙</th></tr>
+  {% for h in history %}
+  <tr>
+    <td class="muted" style="white-space:nowrap">{{ h.created_at.strftime('%d.%m %H:%M') }}</td>
+    <td>{{ h.reason }}</td>
+    <td style="font-weight:700;color:{{ 'var(--good)' if h.amount > 0 else 'var(--again)' }}">
+      {{ '+' if h.amount > 0 else '' }}{{ h.amount }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

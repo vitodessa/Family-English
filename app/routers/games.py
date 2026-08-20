@@ -19,6 +19,7 @@ from app.deps import get_current_user
 from app.emoji_map import emoji_for
 from app.models import Card
 from app.templating import render
+from app.token_service import award_game
 
 router = APIRouter()
 
@@ -88,7 +89,7 @@ def games_spell_done(data: DoneIn, request: Request, db: Session = Depends(get_d
     if not user:
         return JSONResponse({"error": "auth"}, status_code=401)
     touch_session(db, user.id, "game_spell", f"Собери слово: {data.solved}/{data.total}")
-    return {"ok": True}
+    return {"ok": True, "tokens": award_game(db, user.id, "spell")}
 
 
 @router.get("/games/picture")
@@ -231,4 +232,4 @@ def games_done(game: str, data: DoneIn, request: Request, db: Session = Depends(
     if game not in names:
         return JSONResponse({"error": "unknown"}, status_code=404)
     touch_session(db, user.id, f"game_{game}", f"{names[game]}: {data.solved}/{data.total}")
-    return {"ok": True}
+    return {"ok": True, "tokens": award_game(db, user.id, game)}

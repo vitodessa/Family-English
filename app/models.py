@@ -144,6 +144,23 @@ class GrammarLesson(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class TokenLedger(Base):
+    """Журнал токенов (append-only). + заработано за учёбу, − обмен на деньги.
+
+    Баланс = сумма amount. once_key — идемпотентность награды за день
+    (напр. 'lesson:2026-08-20'), чтобы не начислять дважды.
+    """
+
+    __tablename__ = "token_ledger"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    amount = Column(Integer, nullable=False)
+    reason = Column(String, default="")
+    once_key = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class ContentItem(Base):
     """Текст для чтения. В v1 генерируется AI под уровень; читается с тап-переводом.
 

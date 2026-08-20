@@ -72,4 +72,5 @@ def challenge_done(data: DoneIn, request: Request, db: Session = Depends(get_db)
         return JSONResponse({"error": "auth"}, status_code=401)
     verdict = "победа" if data.won else "не пройден"
     touch_session(db, user.id, "challenge", f"Челлендж: {data.score}/{data.total} ({verdict})")
-    return {"ok": True}
+    from app.token_service import award_game
+    return {"ok": True, "tokens": award_game(db, user.id, "challenge", win=data.won)}
