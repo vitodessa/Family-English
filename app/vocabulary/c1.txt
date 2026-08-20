@@ -1,25 +1,24 @@
-car|машина
-train|поезд
-road|дорога
-city|город
-country|страна
-room|комната
-table|стол
-chair|стул
-door|дверь
-window|окно
-phone|телефон
-computer|компьютер
-pen|ручка
-paper|бумага
-bag|сумка
-shoe|обувь
-shirt|рубашка
-jacket|куртка
-money|деньги
-shop|магазин
-market|рынок
-park|парк
-garden|сад
-tree|дерево
-flower|цветок
+comprehensive|всеобъемлющий
+inevitable|неизбежный
+substantial|значительный
+explicit|явный, чёткий
+coherent|связный, последовательный
+ambiguous|двусмысленный
+prevalent|распространённый
+notion|понятие, представление
+implication|следствие, скрытый смысл
+constraint|ограничение
+diminish|уменьшать(ся)
+undertake|предпринимать
+perceive|воспринимать
+reluctant|неохотный
+feasible|осуществимый
+prominent|видный, выдающийся
+deliberate|намеренный
+retain|сохранять, удерживать
+versatile|разносторонний, универсальный
+compelling|убедительный
+scrutiny|тщательное изучение
+advocate|отстаивать; сторонник
+resilient|стойкий, устойчивый
+subtle|тонкий, едва уловимый

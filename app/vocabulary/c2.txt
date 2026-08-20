@@ -1,25 +1,24 @@
-apple|яблоко
-water|вода
-house|дом
-book|книга
-table|стол
-chair|стул
-dog|собака
-cat|кот
-school|школа
-teacher|учитель
-student|студент
-car|машина
-street|улица
-food|еда
-bread|хлеб
-milk|молоко
-family|семья
-mother|мама
-father|папа
-friend|друг
-sun|солнце
-moon|луна
-tree|дерево
-phone|телефон
-computer|компьютер
+ubiquitous|вездесущий
+meticulous|дотошный, скрупулёзный
+nuance|нюанс, тонкость
+inherent|присущий, врождённый
+profound|глубокий
+albeit|хотя и
+notwithstanding|несмотря на
+juxtapose|сопоставлять
+ephemeral|мимолётный
+pervasive|всепроникающий
+eloquent|красноречивый
+tenuous|шаткий, слабый
+quintessential|типичный, образцовый
+pragmatic|прагматичный
+discern|различать, распознавать
+salient|заметный, важный
+inadvertent|непреднамеренный
+cumbersome|громоздкий
+succinct|краткий, лаконичный
+arbitrary|произвольный
+vindicate|оправдывать, подтверждать правоту
+staunch|стойкий, непоколебимый
+esoteric|эзотерический, малопонятный
+scrupulous|щепетильный, добросовестный
