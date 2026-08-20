@@ -97,6 +97,28 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* reading (чтение с тап-переводом) */
+.gen-bar{display:flex;gap:10px;margin:14px 0 4px;flex-wrap:wrap}
+.gen-bar input{flex:1;min-width:220px;margin:0}
+.read-list{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+.read-card{display:flex;flex-direction:column;gap:6px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);color:var(--ink)}
+.read-card:hover{text-decoration:none;border-color:#c9cbe0}
+.rc-title{font-weight:700;font-size:1.1rem}
+.rc-snippet{color:var(--muted);font-size:.9rem}
+.lvl-badge{align-self:flex-start;font-size:.72rem;font-weight:700;padding:2px 8px;
+  border-radius:999px;background:#eef0f7;color:var(--muted)}
+.read-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.reader-text{font-size:1.25rem;line-height:1.9;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:24px;box-shadow:var(--shadow);white-space:pre-wrap}
+.reader-text .w{cursor:pointer;border-radius:4px;padding:0 1px}
+.reader-text .w:hover{background:#eef0ff}
+.wpop{position:absolute;z-index:50;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;min-width:150px;max-width:240px}
+.wpop-word{font-size:1.1rem;display:flex;align-items:center;gap:8px}
+.wpop-tr{color:var(--primary);font-weight:600;margin:6px 0 10px;min-height:1.2em}
+.wpop .btn{width:100%;padding:8px}
+
 /* study quiz (активное припоминание) */
 .quiz{max-width:600px;margin:10px auto}
 .q-emoji{font-size:4.4rem;line-height:1;text-align:center;margin:8px 0 2px}

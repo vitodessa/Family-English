@@ -36,6 +36,9 @@ CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"]
 # Мозг — Claude. Голос — ElevenLabs. Ключи только из окружения (.env), не в коде.
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+# Дешёвая модель для простых задач (перевод слова при чтении). По умолчанию — та же,
+# что основная (безопасно); можно указать Haiku через окружение ради экономии.
+ANTHROPIC_MODEL_CHEAP: str = os.getenv("ANTHROPIC_MODEL_CHEAP", ANTHROPIC_MODEL)
 
 ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
 # Голос по умолчанию (Rachel) и быстрая модель. Можно поменять через окружение.
@@ -46,3 +49,8 @@ ELEVENLABS_MODEL: str = os.getenv("ELEVENLABS_MODEL", "eleven_turbo_v2_5")
 def speaking_enabled() -> bool:
     """Модуль доступен только когда заданы оба ключа."""
     return bool(ANTHROPIC_API_KEY and ELEVENLABS_API_KEY)
+
+
+def reading_enabled() -> bool:
+    """Чтению нужен только Claude (генерация текста + перевод слова)."""
+    return bool(ANTHROPIC_API_KEY)

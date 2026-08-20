@@ -13,6 +13,7 @@
       {% if current_user %}
         <a href="/dashboard">Кабинет</a>
         <a href="/study">Учить</a>
+        <a href="/reading">Чтение</a>
         <a href="/speaking">Разговор</a>
         {% if current_user.is_admin %}<a href="/admin">Админ</a>{% endif %}
         <span class="who">{{ current_user.name }}</span>

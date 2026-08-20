@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Чтение{% endblock %}
+{% block content %}
+<div class="read-head">
+  <a class="btn" href="/reading">← К текстам</a>
+  <span class="lvl-badge">{{ item.cefr_level }}</span>
+</div>
+<h1>{{ item.title }}</h1>
+
+<div id="text" class="reader-text">{{ item.body }}</div>
+<p class="muted center" style="margin-top:16px">
+  Нажми на любое слово — увидишь перевод и сможешь добавить его в карточки.
+</p>
+
+<div id="pop" class="wpop" hidden>
+  <div class="wpop-word"><b id="pop-word"></b>
+    <button id="pop-audio" class="audio-btn" title="Послушать" type="button">🔊</button>
+  </div>
+  <div id="pop-tr" class="wpop-tr">…</div>
+  <button id="pop-add" class="btn primary" type="button">+ в карточки</button>
+</div>
+
+<script>
+(function(){
+  const textEl = document.getElementById('text');
+  const body = textEl.textContent.trim();
+  // разбиваем текст на слова-спаны (безопасно, через textContent)
+  const raw = textEl.textContent;
+  textEl.textContent = '';
+  (raw.match(/[A-Za-z']+|[^A-Za-z']+/g) || []).forEach(p => {
+    if(/[A-Za-z]/.test(p)){ const s=document.createElement('span'); s.className='w'; s.textContent=p; textEl.appendChild(s); }
+    else textEl.appendChild(document.createTextNode(p));
+  });
+
+  const pop=document.getElementById('pop'), popWord=document.getElementById('pop-word'),
+        popTr=document.getElementById('pop-tr'), popAdd=document.getElementById('pop-add'),
+        popAudio=document.getElementById('pop-audio');
+  let curWord='', curTr='';
+
+  function speak(w){ try{ const u=new SpeechSynthesisUtterance(w); u.lang='en-US';
+    speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+  popAudio.onclick = () => speak(curWord);
+
+  function showPop(span){
+    curWord = span.textContent; curTr='';
+    popWord.textContent = curWord;
+    popTr.textContent = '…';
+    popAdd.disabled = true; popAdd.textContent = '+ в карточки';
+    pop.hidden = false;
+    const r = span.getBoundingClientRect();
+    pop.style.left = Math.max(8, window.scrollX + r.left) + 'px';
+    pop.style.top  = (window.scrollY + r.bottom + 6) + 'px';
+    speak(curWord);
+    fetch('/reading/translate', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({word: curWord, sentence: body})})
+      .then(r => r.json()).then(d => {
+        if(d.error){ popTr.textContent = d.error; return; }
+        curTr = d.translation || '';
+        popTr.textContent = curTr || '—';
+        popAdd.disabled = !curTr;
+      }).catch(() => { popTr.textContent = 'ошибка сети'; });
+  }
+
+  textEl.addEventListener('click', e => {
+    if(e.target.classList.contains('w')) showPop(e.target);
+  });
+  popAdd.onclick = () => {
+    if(!curWord || !curTr) return;
+    popAdd.disabled = true;
+    fetch('/reading/add-word', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({word: curWord, translation: curTr})})
+      .then(r => r.json()).then(d => { popAdd.textContent = d.added ? '✓ добавлено' : 'уже в колоде'; })
+      .catch(() => { popAdd.textContent = 'ошибка'; });
+  };
+  document.addEventListener('click', e => {
+    if(!pop.hidden && !pop.contains(e.target) && !e.target.classList.contains('w')) pop.hidden = true;
+  });
+})();
+</script>
+{% endblock %}

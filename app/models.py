@@ -125,3 +125,20 @@ class Mistake(Base):
     category = Column(String, index=True)  # grammar/tense/articles/prepositions/...
     source_module = Column(String, default="speaking")
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class ContentItem(Base):
+    """Текст для чтения. В v1 генерируется AI под уровень; читается с тап-переводом.
+
+    Часть «единой памяти»: слово, тапнутое при чтении, уходит в каталог и карточки.
+    """
+
+    __tablename__ = "content_items"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    cefr_level = Column(String, index=True)
+    topic = Column(String, default="")
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
