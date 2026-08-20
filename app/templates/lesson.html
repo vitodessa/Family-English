@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Урок дня — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Урок дня</h1>
+  <p class="muted">Пройди блоки по порядку и заверши тестом. Выполнено {{ done }} / {{ total }}.</p>
+</section>
+
+{% if all_done %}
+  <div class="fb-card"><b>🎉 Урок пройден!</b> Отличная работа — возвращайся завтра.</div>
+{% endif %}
+
+<div class="bar" style="margin-bottom:18px">
+  <div class="bar-fill" style="width: {{ (done / total * 100) | round }}%"></div>
+</div>
+
+<div class="steps-list">
+  {% for s in steps %}
+  <div class="step {% if s.done %}done{% elif s.key == current %}current{% endif %}">
+    <div class="step-ico">{% if s.done %}✓{% else %}{{ s.icon }}{% endif %}</div>
+    <div class="step-body">
+      <div class="step-name">{{ s.name }}{% if s.optional %} <span class="muted" style="font-weight:400">· по желанию</span>{% endif %}</div>
+      <div class="step-desc muted">{{ s.desc }}</div>
+    </div>
+    {% if s.done %}
+      <span class="step-status">Готово</span>
+    {% else %}
+      <a class="btn {% if s.key == current %}primary{% endif %}" href="{{ s.url }}">
+        {% if s.key == 'test' %}Пройти{% else %}Начать{% endif %} →</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

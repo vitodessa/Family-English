@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Результат теста — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Тест: {{ correct }} / {{ total }}</h1>
+  <p class="muted">
+    {% if correct == total %}Идеально! 🎉
+    {% elif total and correct >= (total * 0.6) %}Хорошо!
+    {% else %}Есть над чем поработать.{% endif %}
+  </p>
+</section>
+
+<div class="card">
+  {% for r in results %}
+  <div style="padding:8px 0;border-top:1px solid var(--line)">
+    <b>{{ r.prompt }}</b> —
+    {% if r.ok %}
+      <span style="color:var(--good)">✓ {{ r.answer }}</span>
+    {% else %}
+      <span style="color:var(--again)">{{ r.given or '—' }}</span> ·
+      <b style="color:var(--good)">{{ r.answer }}</b>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="cta" style="justify-content:flex-start;margin-top:22px">
+  <a class="btn primary" href="/lesson">← К уроку</a>
+  <a class="btn" href="/dashboard">В кабинет</a>
+</div>
+{% endblock %}

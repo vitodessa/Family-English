@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Финальный тест — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/lesson">← Урок</a></div>
+<h1>Финальный тест</h1>
+<p class="muted">Выбери правильный перевод для каждого слова.</p>
+
+<form method="post" action="/lesson/test/submit" class="test-form">
+  <input type="hidden" name="n" value="{{ questions|length }}">
+  {% for q in questions %}
+  {% set qi = loop.index0 %}
+  <div class="test-q">
+    <div class="test-prompt">{{ loop.index }}. {{ q.prompt }}</div>
+    <input type="hidden" name="prompt{{ qi }}" value="{{ q.prompt }}">
+    <input type="hidden" name="correct{{ qi }}" value="{{ q.correct }}">
+    {% for opt in q.options %}
+    <label class="test-opt">
+      <input type="radio" name="q{{ qi }}" value="{{ opt }}" required> {{ opt }}
+    </label>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  <button class="btn primary big-btn" type="submit">Проверить</button>
+</form>
+{% endblock %}

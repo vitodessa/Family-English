@@ -97,6 +97,31 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* lesson (урок дня) */
+.lesson-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  background:var(--primary);border-radius:18px;padding:20px 24px;margin:0 0 22px;box-shadow:var(--shadow)}
+.lesson-banner .lb-title{color:#fff;font-size:1.3rem;font-weight:800}
+.lesson-banner .lb-sub{color:#dcd8ff;font-size:.92rem}
+.lesson-banner .btn{background:#fff;color:var(--primary);border:none}
+.steps-list{display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:16px 18px;box-shadow:var(--shadow)}
+.step.current{border-color:var(--primary);box-shadow:0 0 0 2px rgba(91,75,219,.15),var(--shadow)}
+.step.done{opacity:.72}
+.step-ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;background:#eef0f7;flex:0 0 auto}
+.step.done .step-ico{background:#e7f7ee;color:var(--good)}
+.step-body{flex:1;min-width:0}
+.step-name{font-weight:700;font-size:1.1rem}
+.step-desc{font-size:.9rem}
+.step-status{color:var(--good);font-weight:700;white-space:nowrap}
+.test-q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  margin:12px 0;box-shadow:var(--shadow)}
+.test-prompt{font-size:1.2rem;font-weight:700;margin-bottom:10px}
+.test-opt{display:block;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:1.05rem}
+.test-opt:hover{background:#eef0ff}
+.test-opt input{margin-right:10px}
+
 /* grammar (CEFR-лесенка + клоуз-практика) */
 .grm-level{margin:26px 0 4px;display:flex;align-items:center;gap:10px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}

@@ -13,6 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import reading_service
+from app.activity import touch_session
 from app.config import CEFR_ORDER, reading_enabled
 from app.database import get_db
 from app.deps import get_current_user
@@ -101,6 +102,7 @@ def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
             db.commit()
         except Exception:  # noqa: BLE001
             pass
+    touch_session(db, user.id, "reading", item.title)
     return render(request, "reading_item.html", db=db, item=item, enabled=reading_enabled())
 
 

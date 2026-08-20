@@ -12,6 +12,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import grammar_service
+from app.activity import touch_session
 from app.config import CEFR_ORDER, grammar_enabled
 from app.database import get_db
 from app.deps import get_current_user
@@ -133,6 +134,7 @@ def grammar_check(
             ))
         results.append({"sentence": sent, "answer": ans, "given": you, "ok": ok})
     db.commit()
+    touch_session(db, user.id, "grammar", f"{topic.name}: {correct}/{len(answer)}")
 
     return render(request, "grammar_result.html", db=db,
                   topic=topic, results=results, correct=correct, total=len(answer))

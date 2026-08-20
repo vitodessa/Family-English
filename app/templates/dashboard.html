@@ -6,6 +6,14 @@
   <p class="muted">Уровень {{ current_user.cefr_level }} · сегодня {{ reviews_today }} / {{ daily_goal }} повторений</p>
 </section>
 
+<div class="lesson-banner">
+  <div>
+    <div class="lb-title">▶️ Урок дня</div>
+    <div class="lb-sub">Все блоки по порядку + короткий тест в конце</div>
+  </div>
+  <a class="btn big-btn" href="/lesson">Начать урок</a>
+</div>
+
 <section class="modules">
   {# Карточки — готовый блок. Подсвечиваем, когда есть что повторить. #}
   <a class="mod {% if due_count %}accent{% endif %}" href="/study">

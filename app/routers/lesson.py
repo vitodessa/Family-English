@@ -1,0 +1,135 @@
+"""Урок дня: сшивает блоки в единый ежедневный сценарий + финальный тест.
+
+Урок — это ПРЕДСТАВЛЕНИЕ над активностью дня: готовность шага вычисляется из
+того, что блоки уже пишут (сессии по модулю + повторения за сегодня).
+Финальный тест — короткий MCQ по словам ученика; результат пишется сессией.
+"""
+
+import random
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+
+from app.activity import touch_session
+from app.config import LESSON_CARDS
+from app.database import get_db
+from app.deps import get_current_user
+from app.models import Card, LearningEvent
+from app.models import Session as ConvSession
+from app.templating import render
+
+router = APIRouter()
+
+TEST_QUESTIONS = 6
+
+
+def _day_start() -> datetime:
+    d = datetime.utcnow().date()
+    return datetime(d.year, d.month, d.day)
+
+
+def _did_today(db: Session, user_id: int, module: str) -> bool:
+    return (db.query(ConvSession)
+            .filter(ConvSession.user_id == user_id, ConvSession.module == module,
+                    ConvSession.started_at >= _day_start()).first()) is not None
+
+
+def _build_steps(db: Session, user) -> list[dict]:
+    reviews_today = (db.query(LearningEvent)
+                     .filter(LearningEvent.user_id == user.id,
+                             LearningEvent.reviewed_at >= _day_start()).count())
+    return [
+        {"key": "cards", "icon": "🗂", "name": "Карточки",
+         "desc": f"Повтори {LESSON_CARDS} слов", "url": "/study",
+         "done": reviews_today >= LESSON_CARDS},
+        {"key": "grammar", "icon": "📚", "name": "Грамматика",
+         "desc": "Тема: теория + практика", "url": "/grammar",
+         "done": _did_today(db, user.id, "grammar")},
+        {"key": "reading", "icon": "📖", "name": "Чтение",
+         "desc": "Один короткий текст", "url": "/reading",
+         "done": _did_today(db, user.id, "reading")},
+        {"key": "writing", "icon": "✍️", "name": "Письмо",
+         "desc": "Короткое задание", "url": "/writing",
+         "done": _did_today(db, user.id, "writing")},
+        {"key": "speaking", "icon": "🎤", "name": "Разговор",
+         "desc": "Короткий диалог (по желанию)", "url": "/speaking",
+         "done": _did_today(db, user.id, "speaking"), "optional": True},
+        {"key": "test", "icon": "✅", "name": "Финальный тест",
+         "desc": f"{TEST_QUESTIONS} вопросов по словам", "url": "/lesson/test",
+         "done": _did_today(db, user.id, "lesson_test")},
+    ]
+
+
+@router.get("/lesson")
+def lesson_home(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+
+    steps = _build_steps(db, user)
+    required = [s for s in steps if not s.get("optional")]
+    done_required = sum(1 for s in required if s["done"])
+    all_done = done_required == len(required)
+    # текущий шаг — первый невыполненный (обязательный)
+    current = next((s["key"] for s in steps if not s.get("optional") and not s["done"]), None)
+
+    return render(request, "lesson.html", db=db,
+                  steps=steps, done=done_required, total=len(required),
+                  all_done=all_done, current=current)
+
+
+def _test_questions(db: Session, user) -> list[dict]:
+    cards = db.query(Card).filter(Card.user_id == user.id).all()
+    if len(cards) < 3:
+        return []
+    random.shuffle(cards)
+    backs = [c.back for c in cards]
+    questions = []
+    for card in cards[:TEST_QUESTIONS]:
+        correct = card.back
+        pool = [b for b in backs if b.strip().lower() != correct.strip().lower()]
+        random.shuffle(pool)
+        options = [correct] + pool[:2]
+        random.shuffle(options)
+        questions.append({"prompt": card.front, "correct": correct, "options": options})
+    return questions
+
+
+@router.get("/lesson/test")
+def lesson_test(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    questions = _test_questions(db, user)
+    if not questions:
+        return RedirectResponse("/lesson", status_code=302)
+    return render(request, "lesson_test.html", db=db, questions=questions)
+
+
+@router.post("/lesson/test/submit")
+async def lesson_test_submit(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+
+    form = await request.form()
+    try:
+        n = int(form.get("n", "0"))
+    except ValueError:
+        n = 0
+
+    results, correct = [], 0
+    for i in range(n):
+        prompt = str(form.get(f"prompt{i}", ""))
+        answer = str(form.get(f"correct{i}", ""))
+        given = str(form.get(f"q{i}", ""))
+        ok = given.strip().lower() == answer.strip().lower()
+        if ok:
+            correct += 1
+        results.append({"prompt": prompt, "answer": answer, "given": given, "ok": ok})
+
+    touch_session(db, user.id, "lesson_test", f"Тест: {correct}/{n}")
+    return render(request, "lesson_test_result.html", db=db,
+                  results=results, correct=correct, total=n)
