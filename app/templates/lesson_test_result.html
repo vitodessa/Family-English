@@ -8,6 +8,7 @@
     {% elif total and correct >= (total * 0.6) %}Хорошо!
     {% else %}Есть над чем поработать.{% endif %}
   </p>
+  {% if report_sent %}<div class="ok" style="display:inline-block">📤 Отчёт родителю отправлен</div>{% endif %}
 </section>
 
 <div class="card">

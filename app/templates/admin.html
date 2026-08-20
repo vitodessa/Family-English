@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Семья</h1>
 <table class="tbl">
-  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>Роль</th></tr></thead>
+  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>Роль</th><th>Отчёт</th></tr></thead>
   <tbody>
     {% for r in rows %}
     <tr>
@@ -12,10 +12,16 @@
       <td>{{ r.cards }}</td>
       <td>{{ r.reviews }}</td>
       <td>{{ "админ" if r.user.is_admin else "ученик" }}</td>
+      <td>
+        <form method="post" action="/admin/send-report/{{ r.user.id }}" style="margin:0">
+          <button class="btn ghost" type="submit" {% if not reporting %}disabled title="Не настроен Telegram"{% endif %}>📤 Отчёт</button>
+        </form>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+{% if not reporting %}<p class="muted">Отчёты в Telegram не настроены — задай <code>TELEGRAM_BOT_TOKEN</code> и <code>TELEGRAM_CHAT_ID</code> на сервере.</p>{% endif %}
 
 <div class="grid-2">
   <div class="form-card">

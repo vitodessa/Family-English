@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.config import CEFR_ORDER
+from app.config import CEFR_ORDER, reporting_enabled
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Card, LearningEvent, User, Word
+from app.report_service import build_daily_report, send_telegram
 from app.security import hash_password
 from app.seed import generate_cards_for_user, seed_words
 from app.templating import render
@@ -45,7 +46,18 @@ def admin_page(request: Request, db: Session = Depends(get_db)):
         rows=rows,
         levels=CEFR_ORDER,
         words_total=db.query(Word).count(),
+        reporting=reporting_enabled(),
     )
+
+
+@router.post("/admin/send-report/{user_id}")
+def send_report(user_id: int, request: Request, db: Session = Depends(get_db)):
+    if not _require_admin(request, db):
+        return RedirectResponse("/login", status_code=302)
+    target = db.query(User).filter(User.id == user_id).first()
+    if target:
+        send_telegram(build_daily_report(db, target))  # ручная отправка, сразу
+    return RedirectResponse("/admin", status_code=302)
 
 
 @router.post("/admin/add-user")

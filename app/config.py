@@ -65,3 +65,14 @@ def writing_enabled() -> bool:
 def grammar_enabled() -> bool:
     """Грамматике нужен только Claude (теория + клоуз-практика)."""
     return bool(ANTHROPIC_API_KEY)
+
+
+# --- Отчёт родителю через Telegram-бота ---
+# Токен бота из BotFather и chat_id семейного/родительского чата.
+TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
+
+
+def reporting_enabled() -> bool:
+    """Отчёты уходят, только когда заданы токен бота и chat_id."""
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
