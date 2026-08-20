@@ -104,6 +104,39 @@ def build_glossary(body: str) -> dict[str, str]:
     }
 
 
+def generate_phrases(level: str, topic: str, n: int = 8) -> list[dict[str, str]]:
+    """Набор полезных фраз под уровень (разговорник). [{phrase, translation}]."""
+    level = (level or "A1").upper()
+    topic = (topic or "").strip() or "everyday life"
+    system = ("You create short, USEFUL, natural everyday English phrases for learners. "
+              "Match the requested CEFR level exactly.")
+    user = (
+        f"Give {n} useful everyday English phrases on the topic '{topic}' for a CEFR {level} learner. "
+        "Natural and commonly used, at the right level.\n"
+        'Return a SINGLE raw JSON array and nothing else: '
+        '[{"phrase":"...","translation":"перевод на русский"}]'
+    )
+    raw = _call(system, user, max_tokens=900, model=ANTHROPIC_MODEL_CHEAP).strip()
+    if raw.startswith("```"):
+        raw = raw.strip("`")
+        raw = raw[raw.find("["):raw.rfind("]") + 1]
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+    if not isinstance(data, list):
+        return []
+    out = []
+    for it in data:
+        if not isinstance(it, dict):
+            continue
+        phrase = str(it.get("phrase", "")).strip()
+        tr = str(it.get("translation", "")).strip()
+        if phrase and tr:
+            out.append({"phrase": phrase, "translation": tr})
+    return out[:n]
+
+
 def translate_word(word: str, sentence: str, level: str = "") -> str:
     """Перевести английское слово на русский в контексте предложения."""
     system = ("You are a precise bilingual dictionary. Translate ONE English word into Russian "

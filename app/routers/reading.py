@@ -87,6 +87,32 @@ def reading_generate(
     return RedirectResponse(f"/reading/{item.id}", status_code=302)
 
 
+@router.post("/reading/generate-phrases")
+def reading_generate_phrases(request: Request, topic: str = Form(""),
+                             db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    if not reading_enabled():
+        return RedirectResponse("/reading", status_code=302)
+
+    level = (user.cefr_level or "A1").upper()
+    try:
+        phrases = reading_service.generate_phrases(level, topic)
+    except Exception:  # noqa: BLE001
+        return RedirectResponse("/reading", status_code=302)
+    if not phrases:
+        return RedirectResponse("/reading", status_code=302)
+
+    title = ("Фразы: " + topic.strip()) if topic.strip() else "Полезные фразы"
+    item = ContentItem(title=title[:120], body=json.dumps(phrases, ensure_ascii=False),
+                       kind="phrases", cefr_level=level, topic=topic.strip(), created_by=user.id)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return RedirectResponse(f"/reading/{item.id}", status_code=302)
+
+
 @router.get("/reading/{item_id}")
 def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -95,6 +121,15 @@ def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
     item = db.query(ContentItem).filter(ContentItem.id == item_id).first()
     if not item:
         return RedirectResponse("/reading", status_code=302)
+
+    if item.kind == "phrases":
+        try:
+            phrases = json.loads(item.body or "[]")
+        except (json.JSONDecodeError, ValueError):
+            phrases = []
+        touch_session(db, user.id, "reading", item.title)
+        return render(request, "reading_phrases.html", db=db, item=item, phrases=phrases,
+                      enabled=reading_enabled())
     # Старые тексты без глоссария — соберём один раз при первом открытии.
     if not item.glossary and reading_enabled():
         try:

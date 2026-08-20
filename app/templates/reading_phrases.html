@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Фразы{% endblock %}
+{% block content %}
+<div class="read-head">
+  <a class="btn" href="/reading">← К текстам</a>
+  <span class="lvl-badge">{{ item.cefr_level }}</span>
+</div>
+<h1>{{ item.title }}</h1>
+<p class="muted">🔊 — послушать · «+ в карточки» — добавить фразу в тренировку.</p>
+
+<div class="phrase-list">
+  {% for p in phrases %}
+  <div class="phrase" data-en="{{ p.phrase }}" data-ru="{{ p.translation }}">
+    <div class="ph-main">
+      <button class="audio-btn ph-audio" type="button" title="Послушать">🔊</button>
+      <div>
+        <div class="ph-en">{{ p.phrase }}</div>
+        <div class="ph-ru">{{ p.translation }}</div>
+      </div>
+    </div>
+    <button class="btn ph-add" type="button">+ в карточки</button>
+  </div>
+  {% endfor %}
+</div>
+<div id="toast" class="rtoast"></div>
+
+<script>
+(function(){
+  const toast=document.getElementById('toast');
+  function flash(msg){ toast.textContent=msg; toast.classList.add('show');
+    clearTimeout(flash._t); flash._t=setTimeout(()=>toast.classList.remove('show'),1600); }
+  function speak(t){ try{ const u=new SpeechSynthesisUtterance(t); u.lang='en-US';
+    speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+
+  document.querySelectorAll('.phrase').forEach(row => {
+    const en=row.dataset.en, ru=row.dataset.ru;
+    row.querySelector('.ph-audio').onclick = () => speak(en);
+    row.querySelector('.ph-add').onclick = (e) => {
+      const btn=e.currentTarget; btn.disabled=true;
+      fetch('/reading/add-word', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({word: en, translation: ru})})
+        .then(r=>r.json()).then(d=>{
+          row.classList.add('added');
+          btn.textContent = d.added ? '✓ добавлено' : 'уже в колоде';
+          flash(d.added ? '✓ фраза → в карточки' : 'уже в колоде');
+        }).catch(()=>{ btn.disabled=false; flash('ошибка сети'); });
+    };
+  });
+})();
+</script>
+{% endblock %}

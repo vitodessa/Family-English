@@ -165,6 +165,14 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
 .reader-text .w{cursor:pointer;border-radius:4px;padding:0 1px}
 .reader-text .w:hover{background:#eef0ff}
 .reader-text .w.added{background:#e7f7ee;box-shadow:inset 0 -2px 0 var(--good)}
+.phrase-list{display:flex;flex-direction:column;gap:10px;max-width:640px}
+.phrase{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.ph-main{display:flex;align-items:center;gap:12px;min-width:0}
+.ph-en{font-weight:700;font-size:1.1rem}
+.ph-ru{color:var(--muted);font-size:.92rem}
+.ph-add{white-space:nowrap;padding:8px 14px}
+.phrase.added{background:#e7f7ee;border-color:var(--good)}
 .wtip{position:absolute;z-index:50;background:var(--card);border:1px solid var(--line);
   border-radius:10px;box-shadow:var(--shadow);padding:8px 12px;display:flex;align-items:center;
   gap:8px;font-size:1rem;max-width:280px}

@@ -14,20 +14,21 @@
 {% else %}
   <form class="gen-bar" method="post" action="/reading/generate">
     <input type="text" name="topic" maxlength="120"
-           placeholder="Тема текста (напр. «мой выходной», «космос», «собаки»)">
-    <button class="btn primary" type="submit">✨ Сгенерировать</button>
+           placeholder="Тема (напр. «мой выходной», «в кафе», «собаки»)">
+    <button class="btn primary" type="submit">✨ Текст</button>
+    <button class="btn" type="submit" formaction="/reading/generate-phrases">🗣 Фразы</button>
   </form>
   <p class="muted" style="font-size:.85rem">
-    Текст напишется под твой уровень ({{ current_user.cefr_level }}). Займёт пару секунд.
+    Под твой уровень ({{ current_user.cefr_level }}): «Текст» — короткий рассказ, «Фразы» — полезный разговорник. Пара секунд.
   </p>
 
   {% if items %}
     <div class="read-list">
       {% for it in items %}
       <a class="read-card" href="/reading/{{ it.id }}">
-        <span class="lvl-badge">{{ it.cefr_level }}</span>
+        <span class="lvl-badge">{{ it.cefr_level }}{% if it.kind == 'phrases' %} · 🗣 фразы{% endif %}</span>
         <span class="rc-title">{{ it.title }}</span>
-        <span class="rc-snippet">{{ it.body[:110] }}…</span>
+        <span class="rc-snippet">{% if it.kind == 'phrases' %}разговорник — фразы с озвучкой{% else %}{{ it.body[:110] }}…{% endif %}</span>
       </a>
       {% endfor %}
     </div>

@@ -154,7 +154,8 @@ class ContentItem(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
-    body = Column(Text, nullable=False)
+    body = Column(Text, nullable=False)          # текст; для kind="phrases" — JSON [{phrase,translation}]
+    kind = Column(String, default="text")        # "text" | "phrases"
     cefr_level = Column(String, index=True)
     topic = Column(String, default="")
     # Глоссарий всех слов текста {слово: перевод} (JSON) — строится один раз,
