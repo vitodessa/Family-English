@@ -31,6 +31,7 @@ CAT_LABELS = {
 
 class StartIn(BaseModel):
     level: str = ""
+    mode: str = "free"
 
 
 class TurnIn(BaseModel):
@@ -38,6 +39,7 @@ class TurnIn(BaseModel):
     history: list[dict]
     topic: str = ""
     level: str = ""
+    mode: str = "free"
 
 
 class TtsIn(BaseModel):
@@ -95,7 +97,8 @@ def speaking_start(data: StartIn, request: Request, db: DBSession = Depends(get_
 
     seed = [{"role": "user", "content": "Let's begin the lesson."}]
     try:
-        result = speaking_service.chat_turn(db, user, conv.id, seed, level=data.level)
+        result = speaking_service.chat_turn(db, user, conv.id, seed,
+                                            level=data.level, mode=data.mode)
     except Exception as e:  # noqa: BLE001 — показываем человеку понятную ошибку
         return JSONResponse({"error": f"Не удалось обратиться к ИИ: {e}"}, status_code=502)
 
@@ -118,7 +121,7 @@ def speaking_turn(data: TurnIn, request: Request, db: DBSession = Depends(get_db
 
     try:
         result = speaking_service.chat_turn(db, user, conv.id, data.history,
-                                            data.topic, data.level)
+                                            data.topic, data.level, data.mode)
     except Exception as e:  # noqa: BLE001
         return JSONResponse({"error": f"Ошибка ИИ: {e}"}, status_code=502)
     return result

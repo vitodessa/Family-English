@@ -43,6 +43,7 @@ OUTPUT — ABSOLUTELY CRITICAL: respond with a SINGLE raw JSON object and nothin
 {
   "reply": "spoken English reply (its LENGTH depends on the LEVEL MODE in the student context)",
   "hint": "for beginners: a SHORT Russian translation/gist of your reply to support them; empty string for confident students",
+  "options": ["3 short things the student could say in reply — ONLY in GUIDED mode; empty [] otherwise"],
   "mistakes": [{"original":"...","correction":"...","explanation":"кратко по-русски","category":"tense"}],
   "new_vocab": [{"word":"to commute","translation":"ездить на работу","example":"I commute to work by bike."}]
 }
@@ -50,7 +51,7 @@ Empty arrays if none. Never omit the keys."""
 
 
 def build_context(user: User, recent_mistakes: list[Mistake], due_words: list[Card],
-                  topic: str = "", level: str = "") -> str:
+                  topic: str = "", level: str = "", mode: str = "free") -> str:
     eff_level = (level or user.cefr_level or "A1").upper()
     parts = [
         "# Current student",
@@ -87,6 +88,12 @@ def build_context(user: User, recent_mistakes: list[Mistake], due_words: list[Ca
         parts.append("\n# Words to weave in naturally if you can")
         for c in due_words[:10]:
             parts.append(f"- {c.front} — {c.back}")
+    if mode == "guided":
+        parts.append(
+            "\n# GUIDED MODE (role-play). Fill `options` with EXACTLY 3 short, simple, DIFFERENT "
+            "things the student could say next, at their level (first person, ready to speak aloud). "
+            "Keep your own `reply` short and end with a clear question the options answer."
+        )
     parts.append(
         "\n# Continue the lesson. If this is the first message, greet the student by name "
         "and propose a topic. Respond with raw JSON only."
@@ -127,9 +134,10 @@ def _parse(raw: str) -> dict[str, Any]:
     try:
         obj = json.loads(text)
     except (json.JSONDecodeError, ValueError):
-        return {"reply": raw.strip(), "hint": "", "mistakes": [], "new_vocab": []}
+        return {"reply": raw.strip(), "hint": "", "options": [], "mistakes": [], "new_vocab": []}
     obj.setdefault("reply", "")
     obj.setdefault("hint", "")
+    obj.setdefault("options", [])
     obj.setdefault("mistakes", [])
     obj.setdefault("new_vocab", [])
     return obj
@@ -182,7 +190,7 @@ def _save_turn(db: DBSession, user: User, session_id: int, parsed: dict[str, Any
 
 def chat_turn(db: DBSession, user: User, session_id: int,
               history: list[dict[str, Any]], topic: str = "",
-              level: str = "") -> dict[str, Any]:
+              level: str = "", mode: str = "free") -> dict[str, Any]:
     """history — список реплик [{role, content}], последняя — реплика ученика."""
     recent = (db.query(Mistake).filter(Mistake.user_id == user.id)
               .order_by(Mistake.created_at.desc()).limit(8).all())
@@ -194,8 +202,10 @@ def chat_turn(db: DBSession, user: User, session_id: int,
     # Новичку — жёстко короткий ответ (и физический потолок токенов), сильному — простор.
     eff_level = (level or user.cefr_level or "A1").upper()
     max_tokens = 120 if eff_level == "A1" else 220 if eff_level == "A2" else 700
+    if mode == "guided":
+        max_tokens += 160  # место под 3 варианта ответа
 
-    raw = _call_claude(build_context(user, recent, due, topic, level), history, max_tokens)
+    raw = _call_claude(build_context(user, recent, due, topic, level, mode), history, max_tokens)
     parsed = _parse(raw)
     _save_turn(db, user, session_id, parsed)
     return parsed

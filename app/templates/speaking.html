@@ -18,6 +18,12 @@
         {% endfor %}
       </select>
     </label>
+    <label>Режим:
+      <select id="mode">
+        <option value="free" {% if current_user.cefr_level != 'A1' %}selected{% endif %}>Свободно 🎤</option>
+        <option value="guided" {% if current_user.cefr_level == 'A1' %}selected{% endif %}>С вариантами</option>
+      </select>
+    </label>
     <label>Скорость:
       <select id="speed">
         <option value="0.65" {% if current_user.cefr_level == 'A1' %}selected{% endif %}>🐢 Очень медленно</option>
@@ -25,9 +31,11 @@
         <option value="1.0">🏃 Обычно</option>
       </select>
     </label>
-    <span class="muted">Говори естественно — кнопку жать не нужно. Лучше всего в Chrome.</span>
     <a class="muted" href="/speaking/review" style="margin-left:auto">📊 Разбор речи →</a>
   </div>
+  <p class="muted" style="font-size:.85rem;margin:0 0 6px">
+    «Свободно» — говори в микрофон (лучше в Chrome). «С вариантами» — выбирай ответ кнопкой, микрофон не нужен.
+  </p>
 
   <div id="chat" class="chat"></div>
   <p id="status" class="muted center" style="min-height:1.4em"></p>
@@ -51,6 +59,10 @@
   .notes b{color:var(--ink)} .notes .fix{color:var(--again)} .notes .voc{color:var(--good)}
   .hint-ru{font-size:.9rem;color:var(--muted);font-style:italic;align-self:flex-start;
     max-width:85%;margin-top:-4px}
+  .opts-box{display:flex;flex-direction:column;gap:8px;align-self:flex-start;max-width:85%;margin-top:2px}
+  .opt-btn{text-align:left;background:var(--card);border:1px solid var(--primary);color:var(--primary);
+    border-radius:14px;padding:10px 14px;font-weight:600;cursor:pointer;font-size:1rem}
+  .opt-btn:hover{background:#eef0ff}
 </style>
 
 <script>
@@ -59,9 +71,11 @@ const chat=document.getElementById('chat'), statusEl=document.getElementById('st
 const startBtn=document.getElementById('startBtn'), pauseBtn=document.getElementById('pauseBtn');
 const endBtn=document.getElementById('endBtn'), levelSel=document.getElementById('level');
 const speedSel=document.getElementById('speed'), repeatBtn=document.getElementById('repeatBtn');
+const modeSel=document.getElementById('mode');
 
 let sessionId=null, history=[], rec=null, running=false, lastReply='';
 function curSpeed(){ return parseFloat(speedSel.value)||1.0; }
+function guided(){ return modeSel.value==='guided'; }
 
 function addMsg(text, who){
   const d=document.createElement('div'); d.className='msg '+who; d.textContent=text;
@@ -75,9 +89,21 @@ function addNotes(parsed){
   const d=document.createElement('div'); d.className='notes'; d.innerHTML=bits.join('<br>');
   chat.appendChild(d); d.scrollIntoView({block:'end'});
 }
-function addHint(text){   // русская подсказка под репликой (для новичка), не озвучивается
+function addHint(text){
   const d=document.createElement('div'); d.className='hint-ru'; d.textContent='🇷🇺 '+text;
   chat.appendChild(d); d.scrollIntoView({block:'end'});
+}
+function clearOptions(){ const o=document.getElementById('opts'); if(o) o.remove(); }
+function renderOptions(opts){
+  clearOptions();
+  if(!opts || !opts.length) return;
+  const box=document.createElement('div'); box.className='opts-box'; box.id='opts';
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.type='button'; b.className='opt-btn'; b.textContent=o;
+    b.onclick=()=>{ clearOptions(); sendUser(o); };
+    box.appendChild(b);
+  });
+  chat.appendChild(box); box.scrollIntoView({block:'end'});
 }
 
 // Озвучка: ElevenLabs со скоростью; при сбое — голос браузера (тоже со скоростью).
@@ -104,7 +130,9 @@ async function handleReply(parsed){
   if(parsed.hint) addHint(parsed.hint);
   addNotes(parsed);
   statusEl.textContent='🗣 Отвечает…';
-  await speak(parsed.reply||'');   // ждём, пока договорит, и только потом слушаем (без эха)
+  await speak(parsed.reply||'');       // ждём, пока договорит, потом слушаем/показываем варианты
+  if(guided()){ statusEl.textContent='Выбери ответ 👇'; renderOptions(parsed.options||[]); }
+  else if(running){ startListening(); }
 }
 
 function startListening(){
@@ -115,49 +143,51 @@ function startListening(){
   rec.onresult=e=>{ got=e.results[0][0].transcript; };
   rec.onerror=()=>{};
   rec.onend=async()=>{
-    if(!running) return;
+    if(!running || guided()) return;
     if(got && got.trim()) await sendUser(got.trim());
-    else startListening();          // ничего не услышал — продолжаем слушать
+    else startListening();
   };
   try{ rec.start(); }catch(e){ setTimeout(startListening,400); }
 }
 
 async function sendUser(text){
+  clearOptions();
   addMsg(text,'me'); history.push({role:'user',content:text});
   statusEl.textContent='Думаю…';
   try{
     const r=await fetch('/speaking/turn',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({session_id:sessionId, history, level:levelSel.value})});
+      body:JSON.stringify({session_id:sessionId, history, level:levelSel.value, mode:modeSel.value})});
     const d=await r.json();
-    if(d.error) statusEl.textContent=d.error; else await handleReply(d);
-  }catch(e){ statusEl.textContent='Ошибка соединения.'; }
-  if(running) startListening();
+    if(d.error){ statusEl.textContent=d.error; if(!guided()&&running) startListening(); }
+    else await handleReply(d);
+  }catch(e){ statusEl.textContent='Ошибка соединения.'; if(!guided()&&running) startListening(); }
 }
 
 startBtn.onclick=async()=>{
-  if(!SR){ statusEl.textContent='Этот браузер не умеет распознавать речь — открой страницу в Chrome.'; return; }
+  if(!guided() && !SR){ statusEl.textContent='Этот браузер не умеет распознавать речь — открой в Chrome или выбери режим «С вариантами».'; return; }
   startBtn.disabled=true; statusEl.textContent='Подключаюсь…';
   try{
-    const r=await fetch('/speaking/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:levelSel.value})});
+    const r=await fetch('/speaking/start',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({level:levelSel.value, mode:modeSel.value})});
     const d=await r.json();
     if(d.error){ statusEl.textContent=d.error; startBtn.disabled=false; return; }
     sessionId=d.session_id; history=[{role:'user',content:"Let's begin the lesson."}]; running=true;
     startBtn.style.display='none'; repeatBtn.style.display=''; pauseBtn.style.display=''; endBtn.style.display='';
-    await handleReply(d); startListening();
+    await handleReply(d);
   }catch(e){ statusEl.textContent='Ошибка соединения.'; startBtn.disabled=false; }
 };
 
-repeatBtn.onclick=async()=>{           // переслушать последнюю фразу (на текущей скорости)
+repeatBtn.onclick=async()=>{
   if(!lastReply) return;
   if(rec) try{rec.abort()}catch(e){}
   await speak(lastReply);
-  if(running) startListening();
+  if(!guided() && running) startListening();
 };
 
 pauseBtn.onclick=()=>{
   if(running){ running=false; if(rec)try{rec.abort()}catch(e){} speechSynthesis.cancel();
     statusEl.textContent='⏸ Пауза'; pauseBtn.textContent='▶︎ Продолжить'; }
-  else { running=true; pauseBtn.textContent='⏸ Пауза'; startListening(); }
+  else { running=true; pauseBtn.textContent='⏸ Пауза'; if(!guided()) startListening(); }
 };
 
 endBtn.onclick=async()=>{
