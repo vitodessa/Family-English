@@ -97,6 +97,22 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* study quiz (активное припоминание) */
+.quiz{max-width:600px;margin:10px auto}
+.quiz .hint{text-align:center;color:var(--muted);margin:14px 0 2px}
+.quiz .prompt{font-size:2.2rem;font-weight:700;text-align:center;margin:6px 0 22px}
+.opt{display:block;width:100%;text-align:left;padding:14px 18px;margin:10px 0;
+  border:1px solid var(--line);border-radius:14px;background:var(--card);
+  font-size:1.1rem;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.opt:hover:not(:disabled){border-color:#c9cbe0}
+.opt:disabled{cursor:default}
+.opt.correct{background:#e7f7ee;border-color:var(--good);color:#1c7a4b}
+.opt.wrong{background:#fdecec;border-color:var(--again);color:#b3261e}
+.opt .mark{float:right;font-weight:800}
+.quiz-foot{display:flex;justify-content:center;align-items:center;gap:16px;
+  margin-top:20px;min-height:54px}
+.audio-btn{background:none;border:none;font-size:1.7rem;cursor:pointer;line-height:1}
+
 /* study flashcard */
 .flash{background:var(--card);border:1px solid var(--line);border-radius:20px;
   box-shadow:var(--shadow);padding:54px 24px;margin:22px auto;max-width:560px;text-align:center}

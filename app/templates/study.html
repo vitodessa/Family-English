@@ -10,24 +10,72 @@
 {% else %}
   <p class="muted center">Осталось к повторению: {{ due_count }}</p>
 
-  <div class="flash">
-    <div class="flash-front">{{ card.front }}</div>
-    <div class="flash-back" id="back" hidden>{{ card.back }}</div>
+  <div class="quiz" id="quiz" data-correct="{{ quiz.correct }}" data-word="{{ quiz.en_word }}">
+    <div class="hint">{{ quiz.hint }}</div>
+    <div class="prompt">{{ quiz.prompt }}</div>
+
+    <div id="options">
+      {% for opt in quiz.options %}
+      <button type="button" class="opt" data-val="{{ opt }}">
+        {{ opt }}<span class="mark"></span>
+      </button>
+      {% endfor %}
+    </div>
+
+    <div class="quiz-foot">
+      <button type="button" id="audio" class="audio-btn" title="Послушать" hidden>🔊</button>
+      <form method="post" action="/study/answer" id="next-form" hidden>
+        <input type="hidden" name="card_id" value="{{ card.id }}">
+        <input type="hidden" name="direction" value="{{ quiz.direction }}">
+        <input type="hidden" name="chosen" id="chosen">
+        <button class="btn primary big-btn" type="submit">Далі →</button>
+      </form>
+    </div>
   </div>
 
-  <div class="center">
-    <button class="btn primary big-btn" id="show-btn" type="button"
-            onclick="document.getElementById('back').hidden=false;this.hidden=true;document.getElementById('rate').hidden=false;">
-      Показать ответ
-    </button>
-  </div>
+<script>
+(function(){
+  const quiz = document.getElementById('quiz');
+  const correct = quiz.dataset.correct;
+  const word = quiz.dataset.word;
+  const opts = Array.from(document.querySelectorAll('.opt'));
+  const audioBtn = document.getElementById('audio');
+  const nextForm = document.getElementById('next-form');
+  const chosenInput = document.getElementById('chosen');
+  let answered = false;
 
-  <form class="rate" id="rate" method="post" action="/review" hidden>
-    <input type="hidden" name="card_id" value="{{ card.id }}">
-    <button class="btn rate-1" name="rating" value="1" type="submit">Снова</button>
-    <button class="btn rate-2" name="rating" value="2" type="submit">Трудно</button>
-    <button class="btn rate-3" name="rating" value="3" type="submit">Хорошо</button>
-    <button class="btn rate-4" name="rating" value="4" type="submit">Легко</button>
-  </form>
+  function speak(){
+    try{ const u = new SpeechSynthesisUtterance(word); u.lang='en-US';
+         speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){}
+  }
+  audioBtn.onclick = speak;
+
+  function norm(s){ return (s||'').trim().toLowerCase(); }
+
+  opts.forEach(btn => btn.onclick = () => {
+    if(answered) return;
+    answered = true;
+    const val = btn.dataset.val;
+    const isOk = norm(val) === norm(correct);
+    // подсветить выбранный и правильный
+    opts.forEach(b => {
+      b.disabled = true;
+      if(norm(b.dataset.val) === norm(correct)) b.classList.add('correct');
+    });
+    if(!isOk){ btn.classList.add('wrong'); }
+    btn.querySelector('.mark').textContent = isOk ? '✓' : '✗';
+    chosenInput.value = val;
+    audioBtn.hidden = false;
+    nextForm.hidden = false;
+    if(isOk) speak();   // сразу услышать правильное произношение
+  });
+
+  // 1–3 с клавиатуры выбирают вариант, Enter — «Далі»
+  document.addEventListener('keydown', e => {
+    if(!answered && e.key >= '1' && e.key <= String(opts.length)){ opts[+e.key-1].click(); }
+    else if(answered && e.key === 'Enter'){ nextForm.querySelector('button').click(); }
+  });
+})();
+</script>
 {% endif %}
 {% endblock %}

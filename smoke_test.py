@@ -20,9 +20,9 @@ def main(base: str) -> int:
         r = c.post("/register", data={"name": name, "password": password, "cefr_level": "A2"})
         assert "Кабинет" in r.text or "Привет" in r.text, "register -> dashboard"
 
-        # карточки выданы, есть что учить
+        # карточки выданы, есть что учить (страница-квиз с вариантами)
         r = c.get("/study")
-        assert "Показать ответ" in r.text, "study has a due card"
+        assert 'name="card_id"' in r.text, "study has a due card"
 
         # достаём id первой карточки и оцениваем её
         import re
