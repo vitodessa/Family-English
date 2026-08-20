@@ -97,6 +97,15 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* games: пары (matching) */
+.pairs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:560px;margin:16px auto}
+.pair-col{display:flex;flex-direction:column;gap:10px}
+.pair-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;
+  text-align:center;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.pair-card.sel{border-color:var(--primary);background:#eef0ff}
+.pair-card.matched{background:#e7f7ee;border-color:var(--good);color:var(--good);cursor:default;opacity:.7}
+.pair-card.bad{background:#fdecec;border-color:var(--again)}
+
 /* games: собери слово из букв */
 .spell-clue{text-align:center;margin:16px 0}
 .spell-emoji{font-size:4.4rem;display:block;line-height:1}
