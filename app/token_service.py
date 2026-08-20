@@ -31,6 +31,11 @@ def balance(db, user_id: int) -> int:
                .filter(TokenLedger.user_id == user_id).scalar() or 0)
 
 
+def total_earned(db, user_id: int) -> int:
+    return int(db.query(func.coalesce(func.sum(TokenLedger.amount), 0))
+               .filter(TokenLedger.user_id == user_id, TokenLedger.amount > 0).scalar() or 0)
+
+
 def earned_this_month(db, user_id: int) -> int:
     d = datetime.utcnow()
     start = datetime(d.year, d.month, 1)

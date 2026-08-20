@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Семья — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/dashboard">← В кабинет</a></div>
+<section class="dash-head">
+  <h1>Семья 👨‍👩‍👧‍👦</h1>
+  <p class="muted">Кто чем сегодня занимался — и кто впереди!</p>
+</section>
+
+<div class="fam-members">
+  {% for m in members %}
+  <div class="fam-card">
+    <div class="fam-avatar av{{ loop.index0 % 5 }}">{{ m.name[0] }}</div>
+    <div class="fam-name">{{ m.name }} <span class="lvl-badge">{{ m.level }}</span></div>
+    <div class="fam-stats">🪙 {{ m.tokens }} · {{ m.reviews_today }} сегодня{% if m.streak %} · 🔥 {{ m.streak }}{% endif %}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 style="margin-top:24px">Лента</h2>
+{% if feed %}
+<div class="feed">
+  {% for f in feed %}
+  <div class="feed-item">
+    <span class="feed-ico">{{ f.icon }}</span>
+    <span class="feed-text"><b>{{ f.name }}</b> {{ f.action }}{% if f.summary %} <span class="muted">· {{ f.summary }}</span>{% endif %}</span>
+    <span class="feed-time">{{ f.at.strftime('%d.%m %H:%M') }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="muted">Пока тихо — начните заниматься, и здесь появится активность!</p>
+{% endif %}
+{% endblock %}

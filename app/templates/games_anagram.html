@@ -54,7 +54,7 @@
     }
   }
   function next(){ i++; if(i>=rounds.length) finish(); else render(); }
-  function finish(){ gEl.hidden=true; endEl.hidden=false; window.confetti&&confetti();
+  function finish(){ gEl.hidden=true; endEl.hidden=false; window.confetti&&confetti(); window.sfx&&sfx.win();
     document.getElementById('end-score').textContent='Счёт: '+score+' из '+rounds.length;
     fetch('/games/anagram/done',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({solved:score,total:rounds.length})}).catch(()=>{}); }

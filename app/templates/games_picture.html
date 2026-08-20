@@ -52,7 +52,7 @@
     scoreEl.textContent=score;
     setTimeout(()=>{ i++; if(i>=rounds.length) finish(); else render(); }, ok?600:1000);
   }
-  function finish(){ gEl.hidden=true; endEl.hidden=false; window.confetti&&confetti();
+  function finish(){ gEl.hidden=true; endEl.hidden=false; window.confetti&&confetti(); window.sfx&&sfx.win();
     document.getElementById('end-score').textContent='Счёт: '+score+' из '+rounds.length;
     fetch('/games/picture/done',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({solved:score,total:rounds.length})}).catch(()=>{}); }

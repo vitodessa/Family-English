@@ -79,7 +79,7 @@
   }
 
   function finish(won){
-    gEl.hidden=true; endEl.hidden=false; if(won) window.confetti&&confetti();
+    gEl.hidden=true; endEl.hidden=false; if(won){ window.confetti&&confetti(); window.sfx&&sfx.win(); }
     document.getElementById('end-emoji').textContent = won ? '🏆' : '💛';
     document.getElementById('end-title').textContent = won ? 'Пройдено!' : 'Жизни кончились';
     document.getElementById('end-score').textContent = 'Счёт: ' + score + ' из ' + total;

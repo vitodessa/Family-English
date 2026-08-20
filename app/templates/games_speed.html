@@ -49,7 +49,7 @@
     setTimeout(()=>{ if(left<=0) return; i++; render(); }, ok?350:650);
   }
   function finish(){
-    gEl.hidden=true; endEl.hidden=false; window.confetti&&confetti();
+    gEl.hidden=true; endEl.hidden=false; window.confetti&&confetti(); window.sfx&&sfx.win();
     document.getElementById('end-emoji').textContent = score>=10?'🏆':'⏱';
     document.getElementById('end-score').textContent='Правильно: '+score+' из '+answered;
     fetch('/games/speed/done',{method:'POST',headers:{'Content-Type':'application/json'},

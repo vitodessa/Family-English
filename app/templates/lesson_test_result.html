@@ -30,5 +30,5 @@
   <a class="btn primary" href="/lesson">← К уроку</a>
   <a class="btn" href="/dashboard">В кабинет</a>
 </div>
-{% if tokens %}<script>window.confetti&&confetti();</script>{% endif %}
+{% if tokens %}<script>window.confetti&&confetti(); window.sfx&&sfx.win();</script>{% endif %}
 {% endblock %}

@@ -49,6 +49,17 @@ window.confetti=function(){
       ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore(); });
     if(t<130) requestAnimationFrame(loop); else c.remove(); })();
 };
+// Звук через Web Audio (без внешних API): весёлая трель на победу.
+window.sfx={
+  _c:null,
+  ctx(){ try{ this._c=this._c||new (window.AudioContext||window.webkitAudioContext)(); return this._c; }catch(e){ return null; } },
+  tone(f,t,d){ const c=this.ctx(); if(!c) return; const o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.22,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.start(t); o.stop(t+d); },
+  win(){ const c=this.ctx(); if(!c) return; const n=c.currentTime;
+    [523,659,784,1047].forEach((f,i)=>this.tone(f,n+i*0.11,0.18)); }
+};
 </script>
 </body>
 </html>

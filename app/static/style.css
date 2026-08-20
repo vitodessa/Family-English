@@ -79,6 +79,33 @@ input:focus,select:focus{outline:2px solid var(--primary);border-color:var(--pri
 .bar-fill{height:100%;background:var(--good);border-radius:8px;transition:width .3s}
 .done{font-size:1.1rem}
 
+/* achievements (бейджи) */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:16px}
+.badge{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 14px;
+  text-align:center;box-shadow:var(--shadow);opacity:.5;filter:grayscale(1)}
+.badge.earned{opacity:1;filter:none;background:#fffaf0;border-color:#ffd98a}
+.badge-ico{font-size:2.6rem;line-height:1}
+.badge-title{font-weight:800;margin-top:8px}
+.badge-desc{font-size:.82rem;color:var(--muted);margin-top:4px}
+.badge-got{color:var(--good);font-weight:700;font-size:.8rem;margin-top:6px}
+
+/* family (семейный фид) */
+.fam-members{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:14px}
+.fam-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.fam-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;font-weight:800;color:#fff;text-transform:uppercase}
+.fam-avatar.av0{background:#5b4bdb}.fam-avatar.av1{background:#2bb673}.fam-avatar.av2{background:#f0a92b}
+.fam-avatar.av3{background:#e8503a}.fam-avatar.av4{background:#3a8de8}
+.fam-name{font-weight:700}
+.fam-stats{color:var(--muted);font-size:.9rem}
+.feed{display:flex;flex-direction:column;gap:8px;max-width:680px;margin-top:12px}
+.feed-item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:10px 14px;box-shadow:var(--shadow)}
+.feed-ico{font-size:1.4rem;flex:0 0 auto}
+.feed-text{flex:1;min-width:0}
+.feed-time{color:var(--muted);font-size:.82rem;white-space:nowrap}
+
 /* checklist (вехи уровня) */
 .checklist{display:flex;flex-direction:column;gap:10px;max-width:640px;margin-top:16px}
 .chk-item{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);

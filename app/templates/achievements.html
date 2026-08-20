@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Ачивки — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/dashboard">← В кабинет</a></div>
+<section class="dash-head">
+  <h1>Ачивки 🏅</h1>
+  <p class="muted">Получено {{ done }} / {{ total }} — собери все!</p>
+</section>
+
+<div class="badges">
+  {% for a in items %}
+  <div class="badge {% if a.done %}earned{% endif %}">
+    <div class="badge-ico">{{ a.icon }}</div>
+    <div class="badge-title">{{ a.title }}</div>
+    <div class="badge-desc">{{ a.desc }}</div>
+    {% if a.done %}<div class="badge-got">✓ получено</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
