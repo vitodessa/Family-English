@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Аудирование — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Аудирование</h1>
+  <p class="muted">Послушай текст под свой уровень и впиши пропущенные слова.</p>
+</section>
+
+{% if not enabled %}
+  <div class="form-card">
+    <p class="muted">Аудирование пока не настроено — нужны ключи <code>ANTHROPIC_API_KEY</code>
+      и <code>ELEVENLABS_API_KEY</code> на сервере.</p>
+    <a class="btn" href="/dashboard">← В кабинет</a>
+  </div>
+{% else %}
+  <form class="gen-bar" method="post" action="/listening/generate">
+    <input type="text" name="topic" maxlength="120"
+           placeholder="Тема (напр. «мой день», «погода», «путешествие»)">
+    <button class="btn primary" type="submit">✨ Сгенерировать</button>
+  </form>
+  <p class="muted" style="font-size:.85rem">
+    Под твой уровень ({{ current_user.cefr_level }}): короткий текст + озвучка. Пара секунд.
+  </p>
+
+  {% if items %}
+    <div class="read-list">
+      {% for it in items %}
+      <a class="read-card" href="/listening/{{ it.id }}">
+        <span class="lvl-badge">{{ it.cefr_level }} · 🎧</span>
+        <span class="rc-title">{{ it.title }}</span>
+        <span class="rc-snippet">аудио + пропущенные слова</span>
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted" style="margin-top:20px">Пока нет записей. Сгенерируй первую ↑</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

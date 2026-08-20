@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Аудирование{% endblock %}
+{% block content %}
+<div class="read-head">
+  <a class="btn" href="/listening">← К записям</a>
+  <span class="lvl-badge">{{ item.cefr_level }}</span>
+</div>
+<h1>{{ item.title }}</h1>
+
+<div class="listen-player">
+  <audio id="audio" src="/listening/{{ item.id }}/audio" preload="auto"></audio>
+  <button class="btn primary big-btn" id="play" type="button">▶️ Слушать</button>
+  <label class="muted" style="display:flex;align-items:center;gap:8px;margin:0">Скорость
+    <select id="speed" style="width:auto;margin:0;padding:6px 10px">
+      <option value="0.7" {% if slow %}selected{% endif %}>🐢 медленно</option>
+      <option value="0.85" {% if not slow %}selected{% endif %}>🚶 средне</option>
+      <option value="1.0">🏃 обычно</option>
+    </select>
+  </label>
+</div>
+
+<p class="muted">Слушай и впиши пропущенные слова:</p>
+<form method="post" action="/listening/{{ item.id }}/check" class="listen-form">
+  <div class="cloze-text">
+    {%- for seg in segments -%}
+      {{ seg }}
+      {%- if not loop.last -%}
+        {%- set i = loop.index0 -%}
+        {%- if choice_mode -%}
+          <select name="a{{ i }}" class="blank-sel" required>
+            {% for opt in options[i] %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+          </select>
+        {%- else -%}
+          <input name="a{{ i }}" class="blank-inp" autocomplete="off" autocapitalize="off" required>
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+  <button class="btn primary big-btn" type="submit" style="margin-top:18px">Проверить</button>
+</form>
+
+<script>
+(function(){
+  const audio=document.getElementById('audio'), play=document.getElementById('play'), speed=document.getElementById('speed');
+  function rate(){ audio.playbackRate=parseFloat(speed.value)||1; }
+  speed.onchange=rate; rate();
+  play.onclick=()=>{ rate();
+    if(audio.paused){ audio.play(); play.textContent='⏸ Пауза'; }
+    else { audio.pause(); play.textContent='▶️ Слушать'; } };
+  audio.onended=()=>{ play.textContent='🔁 Ещё раз'; };
+})();
+</script>
+{% endblock %}

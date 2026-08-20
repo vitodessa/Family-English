@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Результат — Аудирование{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Результат: {{ correct }} / {{ total }}</h1>
+  <p class="muted">{{ item.title }}</p>
+</section>
+
+<div class="card">
+  {% for r in results %}
+  <div style="padding:8px 0;border-top:1px solid var(--line)">
+    {% if r.ok %}
+      <span style="color:var(--good)">✓ {{ r.answer }}</span>
+    {% else %}
+      <span style="color:var(--again)">{{ r.given or '—' }}</span> ·
+      <b style="color:var(--good)">{{ r.answer }}</b>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="cta" style="justify-content:flex-start;margin-top:22px">
+  <a class="btn primary" href="/listening/{{ item.id }}">↻ Ещё раз</a>
+  <a class="btn" href="/listening">Новая запись</a>
+  <a class="btn" href="/speaking/review">📊 Разбор ошибок</a>
+</div>
+{% endblock %}

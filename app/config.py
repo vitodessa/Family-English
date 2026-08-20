@@ -68,6 +68,11 @@ def grammar_enabled() -> bool:
     return bool(ANTHROPIC_API_KEY)
 
 
+def listening_enabled() -> bool:
+    """Аудированию нужны оба ключа: Claude (скрипт) + ElevenLabs (голос)."""
+    return bool(ANTHROPIC_API_KEY and ELEVENLABS_API_KEY)
+
+
 # --- Отчёт родителю через Telegram-бота ---
 # Токен бота из BotFather и chat_id семейного/родительского чата.
 TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
