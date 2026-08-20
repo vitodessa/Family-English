@@ -79,6 +79,18 @@ input:focus,select:focus{outline:2px solid var(--primary);border-color:var(--pri
 .bar-fill{height:100%;background:var(--good);border-radius:8px;transition:width .3s}
 .done{font-size:1.1rem}
 
+/* checklist (вехи уровня) */
+.checklist{display:flex;flex-direction:column;gap:10px;max-width:640px;margin-top:16px}
+.chk-item{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);margin:0}
+.chk-item.done{background:#e7f7ee;border-color:var(--good)}
+.chk-box{width:32px;height:32px;flex:0 0 auto;border:2px solid var(--line);border-radius:9px;
+  background:var(--card);cursor:pointer;font-size:1.1rem;font-weight:800;color:var(--good);
+  display:flex;align-items:center;justify-content:center}
+.chk-item.done .chk-box{background:var(--good);border-color:var(--good);color:#fff}
+.chk-text{font-weight:600;font-size:1.05rem}
+.chk-item.done .chk-text{color:#1c7a4b}
+
 /* tokens (мотивация: токены → деньги) */
 .dash-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .token-chip{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#ffd24a,#ff9d2e);
@@ -105,6 +117,15 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
 .mod .ico{font-size:2.1rem;line-height:1}
 .mod .name{font-size:1.2rem;font-weight:700;margin-top:8px}
 .mod .sub{color:var(--muted);font-size:.9rem}
+.mod .ico{transition:transform .12s}
+a.mod:hover .ico{transform:scale(1.15) rotate(-4deg)}
+.mod.c-cards{background:#f1efff;border-color:#dcd6ff}
+.mod.c-grammar{background:#eaf4ff;border-color:#cfe4ff}
+.mod.c-read{background:#e9f9f0;border-color:#c9efd8}
+.mod.c-write{background:#fff5e6;border-color:#ffe4bf}
+.mod.c-listen{background:#e6f8f5;border-color:#c6efe8}
+.mod.c-video{background:#fdecea;border-color:#f8d4cf}
+.mod.c-speak{background:#f3edff;border-color:#e0d2ff}
 .mod.accent{background:var(--primary);border-color:var(--primary)}
 .mod.accent .name,.mod.accent .ico{color:#fff}
 .mod.accent .sub{color:#dcd8ff}

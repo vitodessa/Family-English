@@ -52,7 +52,7 @@
     }
   }
   function finish(){
-    document.getElementById('game').hidden=true; document.getElementById('end').hidden=false;
+    document.getElementById('game').hidden=true; document.getElementById('end').hidden=false; window.confetti&&confetti();
     document.getElementById('end-score').textContent='Ходов: '+moves;
     fetch('/games/memory/done',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({solved:total,total})}).catch(()=>{});

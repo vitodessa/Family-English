@@ -93,7 +93,7 @@
     }
   }
   function finish(){
-    gameEl.hidden=true; endEl.hidden=false;
+    gameEl.hidden=true; endEl.hidden=false; window.confetti&&confetti();
     document.getElementById('end-score').textContent='Решено: '+solved+' из '+rounds.length;
     fetch('/games/spell/done',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({solved, total:rounds.length})}).catch(()=>{});

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Чек-лист уровня — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/dashboard">← В кабинет</a></div>
+<section class="dash-head">
+  <h1>Чек-лист уровня {{ level }} ✅</h1>
+  <p class="muted">Отмечай, что уже освоил — так виден твой прогресс к нерушимому фундаменту.</p>
+</section>
+
+<div class="goal">
+  <div class="goal-row"><span>Выполнено {{ done }} / {{ total }}</span>
+    <span>{{ (done / total * 100) | round if total else 0 }}%</span></div>
+  <div class="bar"><div class="bar-fill" style="width: {{ (done / total * 100) | round if total else 0 }}%"></div></div>
+</div>
+
+{% if done == total and total %}
+  <div class="fb-card"><b>🎉 Уровень {{ level }} освоен!</b> Все вехи отмечены. Так держать!</div>
+{% endif %}
+
+<div class="checklist">
+  {% for r in rows %}
+  <form method="post" action="/checklist/toggle" class="chk-item {% if r.done %}done{% endif %}">
+    <input type="hidden" name="key" value="{{ r.key }}">
+    <button type="submit" class="chk-box">{% if r.done %}✓{% endif %}</button>
+    <span class="chk-text">{{ r.text }}</span>
+  </form>
+  {% endfor %}
+</div>
+{% if total %}
+<p class="muted" style="margin-top:12px;font-size:.85rem">По материалам школы «Черчилль».</p>
+{% else %}
+<p class="muted">Для этого уровня чек-лист пока не готов.</p>
+{% endif %}
+{% endblock %}

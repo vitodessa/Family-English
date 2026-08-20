@@ -12,8 +12,8 @@ from app.config import APP_TITLE, BASE_DIR, SECRET_KEY
 from app.database import Base, SessionLocal, engine, get_db
 from app.deps import get_current_user
 from app.routers import (
-    admin, auth, challenge, games, grammar, lesson, listening, reading, speaking, study,
-    tokens, vocab, video, writing,
+    admin, auth, challenge, checklist, games, grammar, lesson, listening, reading, speaking,
+    study, tokens, vocab, video, writing,
 )
 from app.seed import ensure_admin, ensure_grammar_topics, seed_words
 from app.templating import render
@@ -53,6 +53,7 @@ app.include_router(lesson.router)
 app.include_router(challenge.router)
 app.include_router(games.router)
 app.include_router(tokens.router)
+app.include_router(checklist.router)
 app.include_router(admin.router)
 
 

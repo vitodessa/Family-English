@@ -32,5 +32,23 @@
   <main class="container">
     {% block content %}{% endblock %}
   </main>
+<script>
+// Лёгкое конфетти без внешних библиотек — для побед и завершения урока.
+window.confetti=function(){
+  const c=document.createElement('canvas');
+  c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999';
+  c.width=innerWidth; c.height=innerHeight; document.body.appendChild(c);
+  const ctx=c.getContext('2d');
+  const cols=['#ff6b6b','#5b4bdb','#2bb673','#f0a92b','#3a8de8','#ff9d2e','#8b5cf6'];
+  const P=[]; for(let i=0;i<140;i++)P.push({x:innerWidth*(.3+Math.random()*.4),y:innerHeight*.28,
+    vx:(Math.random()-.5)*13,vy:Math.random()*-13-3,g:.42,c:cols[i%cols.length],
+    s:Math.random()*7+4,r:Math.random()*6.28,vr:(Math.random()-.5)*.4});
+  let t=0;(function loop(){ t++; ctx.clearRect(0,0,c.width,c.height);
+    P.forEach(p=>{ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c;
+      ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore(); });
+    if(t<130) requestAnimationFrame(loop); else c.remove(); })();
+};
+</script>
 </body>
 </html>

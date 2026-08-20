@@ -144,6 +144,17 @@ class GrammarLesson(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ChecklistCheck(Base):
+    """Отметка ученика в чек-листе уровня (веха освоена). Наличие строки = отмечено."""
+
+    __tablename__ = "checklist_checks"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    item_key = Column(String, nullable=False, index=True)  # напр. "A1:3"
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class TokenLedger(Base):
     """Журнал токенов (append-only). + заработано за учёбу, − обмен на деньги.
 

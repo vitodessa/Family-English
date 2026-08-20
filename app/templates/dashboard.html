@@ -19,44 +19,44 @@
 
 <section class="modules">
   {# Карточки — готовый блок. Подсвечиваем, когда есть что повторить. #}
-  <a class="mod {% if due_count %}accent{% endif %}" href="/study">
+  <a class="mod c-cards {% if due_count %}accent{% endif %}" href="/study">
     {% if due_count %}<span class="badge">{{ due_count }}</span>{% endif %}
     <div class="ico">🗂</div>
     <div class="name">Карточки</div>
     <div class="sub">{% if due_count %}{{ due_count }} к повторению сейчас{% else %}на сегодня всё повторено{% endif %}</div>
   </a>
 
-  <a class="mod" href="/speaking">
+  <a class="mod c-speak" href="/speaking">
     <div class="ico">🎤</div>
     <div class="name">Разговор</div>
     <div class="sub">Голосовой собеседник AI</div>
   </a>
 
-  <a class="mod" href="/grammar">
+  <a class="mod c-grammar" href="/grammar">
     <div class="ico">📚</div>
     <div class="name">Грамматика</div>
     <div class="sub">Теория + практика форм</div>
   </a>
 
-  <a class="mod" href="/reading">
+  <a class="mod c-read" href="/reading">
     <div class="ico">📖</div>
     <div class="name">Чтение</div>
     <div class="sub">Тексты с переводом по тапу</div>
   </a>
 
-  <a class="mod" href="/writing">
+  <a class="mod c-write" href="/writing">
     <div class="ico">✍️</div>
     <div class="name">Письмо</div>
     <div class="sub">Проверка текста с разбором</div>
   </a>
 
-  <a class="mod" href="/listening">
+  <a class="mod c-listen" href="/listening">
     <div class="ico">🎧</div>
     <div class="name">Аудирование</div>
     <div class="sub">Аудио + пропущенные слова</div>
   </a>
 
-  <a class="mod" href="/video">
+  <a class="mod c-video" href="/video">
     <div class="ico">🎬</div>
     <div class="name">Видео</div>
     <div class="sub">Ролик + пропущенные слова</div>
@@ -65,6 +65,7 @@
 
 <div class="cta" style="justify-content:flex-start;margin:0 0 26px">
   <a class="btn" href="/games">🎮 Игры</a>
+  <a class="btn" href="/checklist">✅ Чек-лист уровня</a>
   <a class="btn" href="/my-words">+ Добавить слова из урока</a>
   <a class="btn" href="/speaking/review">📊 Разбор речи</a>
 </div>
