@@ -11,7 +11,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import APP_TITLE, BASE_DIR, SECRET_KEY
 from app.database import Base, SessionLocal, engine, get_db
 from app.deps import get_current_user
-from app.routers import admin, auth, grammar, lesson, reading, speaking, study, vocab, writing
+from app.routers import (
+    admin, auth, challenge, grammar, lesson, reading, speaking, study, vocab, writing,
+)
 from app.seed import ensure_admin, ensure_grammar_topics, seed_words
 from app.templating import render
 
@@ -45,6 +47,7 @@ app.include_router(reading.router)
 app.include_router(writing.router)
 app.include_router(grammar.router)
 app.include_router(lesson.router)
+app.include_router(challenge.router)
 app.include_router(admin.router)
 
 

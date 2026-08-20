@@ -25,6 +25,7 @@ INITIAL_CARDS: int = int(os.getenv("INITIAL_CARDS", "20"))
 
 # --- Прогрессия карточек (v2): индивидуальный старт от уровня + долив по мере изучения ---
 LESSON_CARDS: int = int(os.getenv("LESSON_CARDS", "5"))       # повторений для шага «Карточки» в уроке дня
+CHALLENGE_QUESTIONS: int = int(os.getenv("CHALLENGE_QUESTIONS", "10"))  # вопросов в челлендже (тест с жизнями)
 START_CARDS: int = int(os.getenv("START_CARDS", "10"))        # выдать на старте
 WARMUP_CARDS: int = int(os.getenv("WARMUP_CARDS", "8"))       # простых A1 «на разогрев» для уровней выше A1
 DECK_LOW_WATER: int = int(os.getenv("DECK_LOW_WATER", "5"))   # порог «свежих» карточек, ниже которого доливаем

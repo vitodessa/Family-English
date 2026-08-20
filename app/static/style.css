@@ -97,6 +97,15 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* challenge (тест с жизнями) */
+.chal-hud{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;margin:10px 0 16px;font-weight:700}
+.chal-hearts{font-size:1.3rem;letter-spacing:2px}
+.chal-progress{color:var(--muted)}
+.chal-prompt{font-size:2rem;font-weight:800;text-align:center;margin:18px 0 22px}
+.chal-end{text-align:center;padding:20px}
+.chal-end .big{font-size:3.4rem;line-height:1}
+
 /* lesson (урок дня) */
 .lesson-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;
   background:var(--primary);border-radius:18px;padding:20px 24px;margin:0 0 22px;box-shadow:var(--shadow)}

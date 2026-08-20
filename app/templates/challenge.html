@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Челлендж — {{ app_title }}{% endblock %}
+{% block content %}
+<h1>Челлендж 🎯</h1>
+<p class="muted">Три жизни. Ошибся — минус ❤️. Пройди все вопросы, не потеряв все жизни!</p>
+
+{% if not has_questions %}
+  <div class="form-card">
+    <p class="muted">Пока мало слов для челленджа — поучи карточки, и возвращайся.</p>
+    <a class="btn primary" href="/study">К карточкам</a>
+  </div>
+{% else %}
+<div id="game" class="quiz" data-q='{{ questions_json }}'>
+  <div class="chal-hud">
+    <span class="chal-hearts" id="hearts">❤️❤️❤️</span>
+    <span class="chal-progress" id="progress"></span>
+    <span>Счёт: <span id="score">0</span> · Серия: <span id="streak">0</span></span>
+  </div>
+  <div class="chal-prompt" id="prompt"></div>
+  <div id="options"></div>
+</div>
+
+<div id="end" class="chal-end" hidden>
+  <div class="big" id="end-emoji"></div>
+  <h2 id="end-title"></h2>
+  <p class="muted" id="end-score"></p>
+  <div class="cta" style="justify-content:center">
+    <a class="btn primary big-btn" href="/challenge">Ещё раз</a>
+    <a class="btn" href="/dashboard">В кабинет</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  const data = JSON.parse(document.getElementById('game').dataset.q || '[]');
+  const total = data.length;
+  const gEl=document.getElementById('game'), endEl=document.getElementById('end');
+  const heartsEl=document.getElementById('hearts'), progEl=document.getElementById('progress');
+  const scoreEl=document.getElementById('score'), streakEl=document.getElementById('streak');
+  const promptEl=document.getElementById('prompt'), optsEl=document.getElementById('options');
+  let i=0, hearts=3, score=0, streak=0, locked=false;
+
+  function hud(){
+    heartsEl.textContent = '❤️'.repeat(hearts) + '🤍'.repeat(3-hearts);
+    progEl.textContent = (Math.min(i+1,total)) + ' / ' + total;
+    scoreEl.textContent = score; streakEl.textContent = streak;
+  }
+  function norm(s){ return (s||'').trim().toLowerCase(); }
+
+  function render(){
+    locked=false; hud();
+    const q=data[i];
+    promptEl.textContent = q.prompt;
+    optsEl.innerHTML='';
+    q.options.forEach(opt => {
+      const b=document.createElement('button'); b.type='button'; b.className='opt';
+      b.innerHTML = opt + '<span class="mark"></span>';
+      b.onclick = () => choose(b, opt, q.correct);
+      optsEl.appendChild(b);
+    });
+  }
+
+  function choose(btn, opt, correct){
+    if(locked) return; locked=true;
+    const ok = norm(opt)===norm(correct);
+    Array.from(optsEl.children).forEach(b=>{
+      b.disabled=true;
+      if(norm(b.textContent)===norm(correct)) b.classList.add('correct');
+    });
+    if(ok){ score++; streak++; btn.querySelector('.mark').textContent='✓'; }
+    else { hearts--; streak=0; btn.classList.add('wrong'); btn.querySelector('.mark').textContent='✗'; }
+    hud();
+    setTimeout(()=>{
+      if(hearts<=0){ finish(false); return; }
+      i++;
+      if(i>=total){ finish(true); return; }
+      render();
+    }, ok?650:1150);
+  }
+
+  function finish(won){
+    gEl.hidden=true; endEl.hidden=false;
+    document.getElementById('end-emoji').textContent = won ? '🏆' : '💛';
+    document.getElementById('end-title').textContent = won ? 'Пройдено!' : 'Жизни кончились';
+    document.getElementById('end-score').textContent = 'Счёт: ' + score + ' из ' + total;
+    fetch('/challenge/done', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({score, total, won})}).catch(()=>{});
+  }
+
+  render();
+})();
+</script>
+{% endif %}
+{% endblock %}
