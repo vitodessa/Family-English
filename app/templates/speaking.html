@@ -20,8 +20,8 @@
     </label>
     <label>Скорость:
       <select id="speed">
-        <option value="0.65">🐢 Очень медленно</option>
-        <option value="0.8" selected>🚶 Медленно</option>
+        <option value="0.65" {% if current_user.cefr_level == 'A1' %}selected{% endif %}>🐢 Очень медленно</option>
+        <option value="0.8" {% if current_user.cefr_level != 'A1' %}selected{% endif %}>🚶 Медленно</option>
         <option value="1.0">🏃 Обычно</option>
       </select>
     </label>
@@ -49,6 +49,8 @@
   .msg.me{background:var(--primary);color:#fff;align-self:flex-end}
   .notes{font-size:.85rem;color:var(--muted);align-self:flex-start;max-width:85%}
   .notes b{color:var(--ink)} .notes .fix{color:var(--again)} .notes .voc{color:var(--good)}
+  .hint-ru{font-size:.9rem;color:var(--muted);font-style:italic;align-self:flex-start;
+    max-width:85%;margin-top:-4px}
 </style>
 
 <script>
@@ -73,6 +75,10 @@ function addNotes(parsed){
   const d=document.createElement('div'); d.className='notes'; d.innerHTML=bits.join('<br>');
   chat.appendChild(d); d.scrollIntoView({block:'end'});
 }
+function addHint(text){   // русская подсказка под репликой (для новичка), не озвучивается
+  const d=document.createElement('div'); d.className='hint-ru'; d.textContent='🇷🇺 '+text;
+  chat.appendChild(d); d.scrollIntoView({block:'end'});
+}
 
 // Озвучка: ElevenLabs со скоростью; при сбое — голос браузера (тоже со скоростью).
 function speakBrowser(text, done){
@@ -95,6 +101,7 @@ function speak(text){
 
 async function handleReply(parsed){
   if(parsed.reply){ lastReply=parsed.reply; addMsg(parsed.reply,'ai'); history.push({role:'assistant',content:parsed.reply}); }
+  if(parsed.hint) addHint(parsed.hint);
   addNotes(parsed);
   statusEl.textContent='🗣 Отвечает…';
   await speak(parsed.reply||'');   // ждём, пока договорит, и только потом слушаем (без эха)

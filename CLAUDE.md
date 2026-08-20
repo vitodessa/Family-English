@@ -55,7 +55,9 @@ Layering:
 
 `/speaking/*` endpoints are gated by `speaking_enabled()` — they return 503 unless **both** `ANTHROPIC_API_KEY` and `ELEVENLABS_API_KEY` are set. The frontend keeps conversation `history` client-side and posts it each turn.
 
-`speaking_service.chat_turn` builds the prompt as a cached static system block (`STATIC_TUTOR_INSTRUCTIONS`, marked `cache_control: ephemeral`) plus a dynamic per-student context (recent mistakes + due words). Claude must return **a single raw JSON object** `{reply, mistakes, new_vocab}`; `_parse` tolerates stray markdown fences. `_save_turn` then writes mistakes to `Mistake` and **turns `new_vocab` into catalog words + cards** — this is the shared-memory loop in action. If you change the expected JSON shape, update both the prompt and `_parse`/`_save_turn` together.
+`speaking_service.chat_turn` builds the prompt as a cached static system block (`STATIC_TUTOR_INSTRUCTIONS`, marked `cache_control: ephemeral`) plus a dynamic per-student context (recent mistakes + due words + a **level mode**). Claude must return **a single raw JSON object** `{reply, hint, mistakes, new_vocab}` (`hint` is an optional Russian scaffold shown but not spoken); `_parse` tolerates stray markdown fences. `_save_turn` then writes mistakes to `Mistake` and **turns `new_vocab` into catalog words + cards** — this is the shared-memory loop in action. If you change the expected JSON shape, update both the prompt and `_parse`/`_save_turn` together.
+
+**Difficulty is level-gated** (`build_context` + dynamic `max_tokens` in `chat_turn`): A1 = true-beginner/child mode (one ~6-word English sentence, always a Russian `hint`, no new vocab, `max_tokens=120`); A2 = easy (`max_tokens=220`); B1+ = normal (`max_tokens=700`). A1 decks also never absorb phrases the tutor introduces (see `_save_turn`). The card study flow (`study.py`) is an auto-graded multiple-choice quiz — correct→`Good`, wrong→`Again` — feeding the same FSRS `apply_review`; decks grow by level-ordered drip-feed (`seed.top_up_deck`), not a one-time random dump.
 
 ## Deployment
 

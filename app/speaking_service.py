@@ -28,7 +28,7 @@ You talk to one student at a time through a VOICE interface in a live back-and-f
 How you handle each student turn — do three things at once:
 1. RESPOND naturally to keep the conversation alive. Ask a follow-up question so the student keeps talking.
 2. CORRECT mistakes WITHOUT breaking the flow: record them in the structured field; in speech you may gently recast the correct form, never lecture.
-3. INTRODUCE 1–2 useful new words/phrases when natural, and record them.
+3. When it fits the student's level, INTRODUCE 1–2 useful new words/phrases and record them — but SKIP this entirely for true beginners (see LEVEL MODE).
 
 ADAPTIVITY IS YOUR MOST IMPORTANT RULE:
 - Match the student's REAL level shown by how they actually speak right now, not just the label. If they speak in short simple sentences, you do the same.
@@ -41,7 +41,8 @@ Mistake `category` is one of: grammar, tense, articles, prepositions, word_order
 
 OUTPUT — ABSOLUTELY CRITICAL: respond with a SINGLE raw JSON object and nothing else (no markdown fences):
 {
-  "reply": "spoken reply, 2-4 sentences, plain English",
+  "reply": "spoken English reply (its LENGTH depends on the LEVEL MODE in the student context)",
+  "hint": "for beginners: a SHORT Russian translation/gist of your reply to support them; empty string for confident students",
   "mistakes": [{"original":"...","correction":"...","explanation":"кратко по-русски","category":"tense"}],
   "new_vocab": [{"word":"to commute","translation":"ездить на работу","example":"I commute to work by bike."}]
 }
@@ -54,8 +55,28 @@ def build_context(user: User, recent_mistakes: list[Mistake], due_words: list[Ca
     parts = [
         "# Current student",
         f"- Name: {user.name}",
-        f"- Target level (ceiling): {eff_level} — calibrate DOWN to match how the student actually speaks",
+        f"- Target level (HARD CEILING, never exceed): {eff_level} — calibrate DOWN to how the student actually speaks",
     ]
+
+    # Режим сложности по уровню — жёсткие рамки для новичка/ребёнка.
+    if eff_level == "A1":
+        parts.append(
+            "\n# LEVEL MODE — TRUE BEGINNER / CHILD (A1). Follow STRICTLY; this overrides the general rules:\n"
+            "- `reply`: ONE very short English sentence, max ~6 words, simplest common words only.\n"
+            "- Ask ONE tiny question the student can answer in 1–3 words.\n"
+            "- ALWAYS fill `hint` with a short Russian translation of your reply.\n"
+            "- Do NOT introduce new or advanced words; reuse the SAME easy words. Keep `new_vocab` empty.\n"
+            "- Be warm and slow, like talking to a child. Never lecture."
+        )
+    elif eff_level == "A2":
+        parts.append(
+            "\n# LEVEL MODE — EASY (A2):\n"
+            "- `reply`: 1–2 short simple sentences, common words only.\n"
+            "- Fill `hint` with a short Russian gist unless the sentence is trivial.\n"
+            "- Introduce at most ONE easy word, and only if it fits naturally."
+        )
+    # B1+ — обычный режим (правила из статической методички), hint можно оставлять пустым.
+
     if topic:
         parts.append(f"\n# Today's topic\n{topic}")
     if recent_mistakes:
@@ -73,7 +94,8 @@ def build_context(user: User, recent_mistakes: list[Mistake], due_words: list[Ca
     return "\n".join(parts)
 
 
-def _call_claude(dynamic_context: str, history: list[dict[str, Any]]) -> str:
+def _call_claude(dynamic_context: str, history: list[dict[str, Any]],
+                 max_tokens: int = 700) -> str:
     system = [
         {"type": "text", "text": STATIC_TUTOR_INSTRUCTIONS,
          "cache_control": {"type": "ephemeral"}},
@@ -86,7 +108,7 @@ def _call_claude(dynamic_context: str, history: list[dict[str, Any]]) -> str:
             "anthropic-version": "2023-06-01",
             "content-type": "application/json",
         },
-        json={"model": ANTHROPIC_MODEL, "max_tokens": 700,
+        json={"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
               "system": system, "messages": history},
         timeout=60,
     )
@@ -105,8 +127,9 @@ def _parse(raw: str) -> dict[str, Any]:
     try:
         obj = json.loads(text)
     except (json.JSONDecodeError, ValueError):
-        return {"reply": raw.strip(), "mistakes": [], "new_vocab": []}
+        return {"reply": raw.strip(), "hint": "", "mistakes": [], "new_vocab": []}
     obj.setdefault("reply", "")
+    obj.setdefault("hint", "")
     obj.setdefault("mistakes", [])
     obj.setdefault("new_vocab", [])
     return obj
@@ -163,7 +186,11 @@ def chat_turn(db: DBSession, user: User, session_id: int,
            .filter(Card.user_id == user.id, Card.due <= datetime.utcnow())
            .order_by(Card.due.asc()).limit(10).all())
 
-    raw = _call_claude(build_context(user, recent, due, topic, level), history)
+    # Новичку — жёстко короткий ответ (и физический потолок токенов), сильному — простор.
+    eff_level = (level or user.cefr_level or "A1").upper()
+    max_tokens = 120 if eff_level == "A1" else 220 if eff_level == "A2" else 700
+
+    raw = _call_claude(build_context(user, recent, due, topic, level), history, max_tokens)
     parsed = _parse(raw)
     _save_turn(db, user, session_id, parsed)
     return parsed
