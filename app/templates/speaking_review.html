@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Разбор речи — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Разбор речи</h1>
+  <p class="muted">Разговоры с AI и разобранные ошибки. Каждый разговор пополняет твои карточки.</p>
+</section>
+
+<div class="cta" style="justify-content:flex-start">
+  <a class="btn primary" href="/speaking">🎤 Новый разговор</a>
+  <a class="btn" href="/dashboard">← В кабинет</a>
+</div>
+
+<h2 style="margin-top:26px">Последние разговоры</h2>
+{% if sessions %}
+  <table class="tbl">
+    <tr><th>Когда</th><th>О чём говорили</th></tr>
+    {% for s in sessions %}
+    <tr>
+      <td class="muted" style="white-space:nowrap">{{ s.started_at.strftime('%d.%m %H:%M') }}</td>
+      <td>{{ s.summary or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p class="muted">Пока не было разговоров. <a href="/speaking">Начать первый →</a></p>
+{% endif %}
+
+<h2 style="margin-top:30px">Разобранные ошибки{% if total_mistakes %} · {{ total_mistakes }}{% endif %}</h2>
+{% if groups %}
+  {% for label, items in groups %}
+  <div class="card" style="margin-top:14px">
+    <h3 style="margin-top:0">{{ label }} <span class="muted">· {{ items|length }}</span></h3>
+    {% for m in items %}
+    <div style="padding:8px 0;border-top:1px solid var(--line)">
+      <div><span style="color:var(--again)">{{ m.original }}</span> → <b style="color:var(--good)">{{ m.correction }}</b></div>
+      {% if m.explanation %}<div class="muted" style="font-size:.9rem">{{ m.explanation }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="muted">Пока нет разобранных ошибок — они появятся после разговоров с AI.</p>
+{% endif %}
+{% endblock %}

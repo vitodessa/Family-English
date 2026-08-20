@@ -165,6 +165,52 @@ def chat_turn(db: DBSession, user: User, session_id: int,
     return parsed
 
 
+def summarize_session(history: list[dict[str, Any]]) -> str:
+    """Короткое резюме разговора одним предложением по-русски.
+
+    Пишется в Session.summary — это «след» урока, который потом читают дашборды.
+    Возвращает пустую строку, если ключа нет или вызов не удался: резюме
+    необязательно, вызывающий подставит запасной текст и не помешает завершить сессию.
+    """
+    if not ANTHROPIC_API_KEY or not history:
+        return ""
+    lines = []
+    for m in history[-24:]:
+        content = str(m.get("content", "")).strip()
+        if not content:
+            continue
+        who = "Ученик" if m.get("role") == "user" else "Репетитор"
+        lines.append(f"{who}: {content}")
+    transcript = "\n".join(lines)
+    if not transcript:
+        return ""
+    prompt = (
+        "Это стенограмма урока разговорного английского. Опиши ОДНИМ коротким "
+        "предложением по-русски, о чём говорили и что отработали. Верни только предложение.\n\n"
+        + transcript
+    )
+    try:
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={"model": ANTHROPIC_MODEL, "max_tokens": 120,
+                  "messages": [{"role": "user", "content": prompt}]},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        text = "".join(
+            b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"
+        ).strip()
+        return text[:500]
+    except Exception:  # noqa: BLE001 — резюме необязательно, тихо отступаем
+        return ""
+
+
 def text_to_speech(text: str, speed: float = 1.0) -> bytes:
     """Озвучка реплики натуральным голосом (ElevenLabs). Возвращает mp3-байты.
 

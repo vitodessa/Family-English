@@ -11,10 +11,22 @@ from app import speaking_service
 from app.config import speaking_enabled
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import Session as ConvSession
+from app.models import Mistake, Session as ConvSession
 from app.templating import render
 
 router = APIRouter()
+
+# Русские подписи категорий ошибок (категории задаёт промпт speaking_service).
+CAT_LABELS = {
+    "grammar": "Грамматика",
+    "tense": "Времена",
+    "articles": "Артикли",
+    "prepositions": "Предлоги",
+    "word_order": "Порядок слов",
+    "vocab": "Лексика",
+    "pronunciation": "Произношение",
+    "other": "Прочее",
+}
 
 
 class StartIn(BaseModel):
@@ -39,6 +51,33 @@ def speaking_page(request: Request, db: DBSession = Depends(get_db)):
     if not user:
         return RedirectResponse("/login", status_code=302)
     return render(request, "speaking.html", db=db, enabled=speaking_enabled())
+
+
+@router.get("/speaking/review")
+def speaking_review(request: Request, db: DBSession = Depends(get_db)):
+    """Разбор речи: прошлые разговоры (с резюме) + накопленные ошибки по категориям."""
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+
+    sessions = (db.query(ConvSession)
+                .filter(ConvSession.user_id == user.id, ConvSession.module == "speaking")
+                .order_by(ConvSession.started_at.desc()).limit(20).all())
+    mistakes = (db.query(Mistake)
+                .filter(Mistake.user_id == user.id)
+                .order_by(Mistake.created_at.desc()).limit(100).all())
+
+    # Группируем по категории, сохраняя порядок «сначала свежие».
+    groups, buckets = [], {}
+    for m in mistakes:
+        cat = m.category or "other"
+        if cat not in buckets:
+            buckets[cat] = []
+            groups.append((CAT_LABELS.get(cat, cat), buckets[cat]))
+        buckets[cat].append(m)
+
+    return render(request, "speaking_review.html", db=db,
+                  sessions=sessions, groups=groups, total_mistakes=len(mistakes))
 
 
 @router.post("/speaking/start")
@@ -109,5 +148,12 @@ def speaking_end(data: TurnIn, request: Request, db: DBSession = Depends(get_db)
             .first())
     if conv and not conv.ended_at:
         conv.ended_at = datetime.utcnow()
+        # Резюме урока в «единую память»; при недоступности ИИ — сухая сводка.
+        summary = speaking_service.summarize_session(data.history)
+        if not summary:
+            turns = sum(1 for m in data.history if m.get("role") == "user")
+            fixed = db.query(Mistake).filter(Mistake.session_id == conv.id).count()
+            summary = f"Реплик ученика: {turns}, разобрано ошибок: {fixed}."
+        conv.summary = summary[:1000]
         db.commit()
     return {"ok": True}
