@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Игры — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Игры 🎮</h1>
+  <p class="muted">Разные способы тренировать слова — в игровой форме.</p>
+</section>
+
+<div class="read-list">
+  <a class="read-card" href="/games/spell">
+    <span class="rc-title">🔤 Собери слово</span>
+    <span class="rc-snippet">Составь слово из букв по картинке</span>
+  </a>
+  <a class="read-card" href="/challenge">
+    <span class="rc-title">🎯 Челлендж</span>
+    <span class="rc-snippet">Тест с жизнями ❤️❤️❤️</span>
+  </a>
+  <div class="read-card" style="opacity:.55">
+    <span class="rc-title">🖼 Слово ↔ картинка</span><span class="rc-snippet">скоро</span>
+  </div>
+  <div class="read-card" style="opacity:.55">
+    <span class="rc-title">🧩 Пары</span><span class="rc-snippet">скоро</span>
+  </div>
+  <div class="read-card" style="opacity:.55">
+    <span class="rc-title">🔊 Аудио-режим</span><span class="rc-snippet">скоро</span>
+  </div>
+</div>
+{% endblock %}

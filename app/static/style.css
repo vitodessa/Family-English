@@ -97,6 +97,23 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* games: собери слово из букв */
+.spell-clue{text-align:center;margin:16px 0}
+.spell-emoji{font-size:4.4rem;display:block;line-height:1}
+.spell-word-clue{color:var(--muted);font-size:1.15rem;margin-top:6px}
+.spell-cells{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+.spell-cells .cell{width:44px;height:52px;border-bottom:3px solid var(--line);display:flex;
+  align-items:center;justify-content:center;font-size:1.6rem;font-weight:800}
+.spell-cells .cell.filled{border-bottom-color:var(--primary);cursor:pointer}
+.spell-cells.ok .cell{border-bottom-color:var(--good);color:var(--good)}
+.spell-cells.bad{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.spell-pool{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.letter{width:44px;height:52px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+  font-size:1.5rem;font-weight:800;color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.letter:hover:not(:disabled){border-color:var(--primary)}
+.letter.used{opacity:.25;cursor:default}
+
 /* challenge (тест с жизнями) */
 .chal-hud{display:flex;align-items:center;justify-content:space-between;gap:12px;
   flex-wrap:wrap;margin:10px 0 16px;font-weight:700}

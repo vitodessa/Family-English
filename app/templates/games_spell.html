@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Собери слово — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/games">← Игры</a></div>
+<h1>Собери слово 🔤</h1>
+
+{% if not has_rounds %}
+  <div class="form-card">
+    <p class="muted">Пока мало слов для игры — поучи карточки и возвращайся.</p>
+    <a class="btn primary" href="/study">К карточкам</a>
+  </div>
+{% else %}
+<div id="game" data-rounds='{{ rounds_json }}'>
+  <div class="chal-hud">
+    <span class="chal-progress" id="progress"></span>
+    <span>Решено: <span id="solved">0</span></span>
+  </div>
+  <div class="spell-clue" id="clue"></div>
+  <div class="spell-cells" id="cells"></div>
+  <div class="spell-pool" id="pool"></div>
+  <p class="muted center" id="hint" style="min-height:1.2em"></p>
+</div>
+
+<div id="end" class="chal-end" hidden>
+  <div class="big">🏆</div>
+  <h2>Готово!</h2>
+  <p class="muted" id="end-score"></p>
+  <div class="cta" style="justify-content:center">
+    <a class="btn primary big-btn" href="/games/spell">Ещё раз</a>
+    <a class="btn" href="/games">К играм</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  const rounds = JSON.parse(document.getElementById('game').dataset.rounds || '[]');
+  const gameEl=document.getElementById('game'), endEl=document.getElementById('end');
+  const progressEl=document.getElementById('progress'), solvedEl=document.getElementById('solved');
+  const clueEl=document.getElementById('clue'), cellsEl=document.getElementById('cells');
+  const poolEl=document.getElementById('pool'), hintEl=document.getElementById('hint');
+  let i=0, solved=0, placed=[];
+
+  function shuffle(a){ for(let x=a.length-1;x>0;x--){const j=Math.floor(Math.random()*(x+1));[a[x],a[j]]=[a[j],a[x]];} return a; }
+
+  function renderCells(){
+    const w=rounds[i].word;
+    cellsEl.innerHTML='';
+    for(let k=0;k<w.length;k++){
+      const cell=document.createElement('div'); cell.className='cell';
+      if(placed[k]){ cell.textContent=placed[k].char; cell.classList.add('filled');
+        cell.onclick=()=>removeFrom(k); }
+      cellsEl.appendChild(cell);
+    }
+  }
+  function renderRound(){
+    placed=[]; hintEl.textContent='';
+    const r=rounds[i];
+    progressEl.textContent=(i+1)+' / '+rounds.length;
+    clueEl.innerHTML = (r.emoji ? `<span class="spell-emoji">${r.emoji}</span>` : '')
+      + `<div class="spell-word-clue">${r.clue}</div>`;
+    renderCells();
+    let scr=shuffle(r.word.split(''));
+    if(scr.join('')===r.word) scr=shuffle(scr);
+    poolEl.innerHTML='';
+    scr.forEach(ch=>{
+      const b=document.createElement('button'); b.type='button'; b.className='letter'; b.textContent=ch;
+      b.onclick=()=>placeLetter(b,ch);
+      poolEl.appendChild(b);
+    });
+  }
+  function placeLetter(btn,ch){
+    if(placed.length>=rounds[i].word.length || btn.disabled) return;
+    placed.push({char:ch, btn}); btn.disabled=true; btn.classList.add('used');
+    renderCells();
+    if(placed.length===rounds[i].word.length) check();
+  }
+  function removeFrom(k){
+    for(let j=placed.length-1;j>=k;j--){ placed[j].btn.disabled=false; placed[j].btn.classList.remove('used'); }
+    placed=placed.slice(0,k); renderCells();
+  }
+  function check(){
+    const w=rounds[i].word;
+    const asm=placed.map(p=>p.char).join('');
+    if(asm.toLowerCase()===w.toLowerCase()){
+      solvedEl.textContent=(++solved);
+      cellsEl.classList.add('ok');
+      setTimeout(()=>{ cellsEl.classList.remove('ok'); i++;
+        if(i>=rounds.length) finish(); else renderRound(); }, 700);
+    } else {
+      cellsEl.classList.add('bad'); hintEl.textContent='Не то — попробуй ещё';
+      setTimeout(()=>{ cellsEl.classList.remove('bad');
+        placed.forEach(p=>{p.btn.disabled=false;p.btn.classList.remove('used');}); placed=[]; renderCells(); }, 800);
+    }
+  }
+  function finish(){
+    gameEl.hidden=true; endEl.hidden=false;
+    document.getElementById('end-score').textContent='Решено: '+solved+' из '+rounds.length;
+    fetch('/games/spell/done',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({solved, total:rounds.length})}).catch(()=>{});
+  }
+  renderRound();
+})();
+</script>
+{% endif %}
+{% endblock %}
