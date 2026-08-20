@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Виселица — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/games">← Игры</a></div>
+<h1>Виселица 🎯</h1>
+<p class="muted">Угадывай буквы. Подсказка — перевод. Береги жизни!</p>
+
+{% if not has_rounds %}
+  <div class="form-card"><p class="muted">Пока мало слов — поучи карточки.</p>
+    <a class="btn primary" href="/study">К карточкам</a></div>
+{% else %}
+<div id="game" data-rounds='{{ rounds_json }}'>
+  <div class="chal-hud"><span class="chal-progress" id="progress"></span><span>Отгадано: <span id="score">0</span></span></div>
+  <div class="hm-lives center" id="lives"></div>
+  <div class="spell-word-clue center" id="clue"></div>
+  <div class="hm-word" id="word"></div>
+  <div class="hm-keys" id="keys"></div>
+  <p class="muted center" id="hint" style="min-height:1.4em"></p>
+</div>
+<div id="end" class="chal-end" hidden>
+  <div class="big">🏆</div><h2>Готово!</h2><p class="muted" id="end-score"></p>
+  <div class="cta" style="justify-content:center">
+    <a class="btn primary big-btn" href="/games/hangman">Ещё раз</a><a class="btn" href="/games">К играм</a>
+  </div>
+</div>
+<script>
+(function(){
+  const rounds=JSON.parse(document.getElementById('game').dataset.rounds||'[]');
+  const gEl=document.getElementById('game'), endEl=document.getElementById('end');
+  const progEl=document.getElementById('progress'), scoreEl=document.getElementById('score');
+  const livesEl=document.getElementById('lives'), clueEl=document.getElementById('clue');
+  const wordEl=document.getElementById('word'), keysEl=document.getElementById('keys'), hint=document.getElementById('hint');
+  const MAX=6;
+  let i=0, score=0, lives=MAX, revealed=[], locked=false;
+  function renderWord(){
+    const w=rounds[i].word; wordEl.innerHTML='';
+    for(const ch of w){
+      const cell=document.createElement('span'); cell.className='hm-cell';
+      cell.textContent = revealed.includes(ch.toLowerCase()) ? ch : '';
+      wordEl.appendChild(cell);
+    }
+  }
+  function renderLives(){ livesEl.textContent='❤️'.repeat(lives)+'🤍'.repeat(MAX-lives); }
+  function render(){
+    locked=false; lives=MAX; revealed=[]; hint.textContent='';
+    progEl.textContent=(i+1)+' / '+rounds.length; scoreEl.textContent=score;
+    clueEl.textContent=rounds[i].clue; renderLives(); renderWord();
+    keysEl.innerHTML='';
+    'abcdefghijklmnopqrstuvwxyz'.split('').forEach(l=>{
+      const b=document.createElement('button'); b.type='button'; b.className='hm-key'; b.textContent=l;
+      b.onclick=()=>guess(l,b); keysEl.appendChild(b);
+    });
+  }
+  function guess(l,btn){
+    if(locked) return; btn.disabled=true;
+    const w=rounds[i].word.toLowerCase();
+    if(w.includes(l)){
+      revealed.push(l); renderWord();
+      if([...new Set(w)].every(ch=>revealed.includes(ch))){
+        locked=true; score++; scoreEl.textContent=score;
+        hint.innerHTML='<span style="color:var(--good)">✓ Отгадано!</span>'; setTimeout(next,800);
+      }
+    } else {
+      lives--; btn.classList.add('miss'); renderLives();
+      if(lives<=0){ locked=true; revealed=w.split(''); renderWord();
+        hint.innerHTML='Слово было: <b>'+rounds[i].word+'</b>'; setTimeout(next,1300); }
+    }
+  }
+  function next(){ i++; if(i>=rounds.length) finish(); else render(); }
+  function finish(){ gEl.hidden=true; endEl.hidden=false;
+    document.getElementById('end-score').textContent='Отгадано: '+score+' из '+rounds.length;
+    fetch('/games/hangman/done',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({solved:score,total:rounds.length})}).catch(()=>{}); }
+  render();
+})();
+</script>
+{% endif %}
+{% endblock %}

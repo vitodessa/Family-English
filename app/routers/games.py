@@ -6,6 +6,7 @@
 
 import json
 import random
+import string
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -25,6 +26,10 @@ SPELL_ROUNDS = 8
 PICTURE_ROUNDS = 8
 AUDIO_ROUNDS = 8
 PAIRS_COUNT = 6
+WORD_ROUNDS = 8       # анаграмма / виселица
+MISSING_ROUNDS = 10
+SPEED_ROUNDS = 30     # с запасом под таймер
+MEMORY_PAIRS = 6
 
 
 class DoneIn(BaseModel):
@@ -122,12 +127,107 @@ def games_pairs(request: Request, db: Session = Depends(get_db)):
                   pairs_json=json.dumps(pairs, ensure_ascii=False), has_pairs=len(pairs) >= 3)
 
 
+def _words(cards):
+    return [c for c in cards if c.front.isalpha() and 3 <= len(c.front) <= 9]
+
+
+@router.get("/games/anagram")
+def games_anagram(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    good = _words(db.query(Card).filter(Card.user_id == user.id).all())
+    random.shuffle(good)
+    rounds = [{"word": c.front, "clue": c.back} for c in good[:WORD_ROUNDS]]
+    return render(request, "games_anagram.html", db=db,
+                  rounds_json=json.dumps(rounds, ensure_ascii=False), has_rounds=bool(rounds))
+
+
+@router.get("/games/hangman")
+def games_hangman(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    good = _words(db.query(Card).filter(Card.user_id == user.id).all())
+    random.shuffle(good)
+    rounds = [{"word": c.front, "clue": c.back} for c in good[:WORD_ROUNDS]]
+    return render(request, "games_hangman.html", db=db,
+                  rounds_json=json.dumps(rounds, ensure_ascii=False), has_rounds=bool(rounds))
+
+
+@router.get("/games/missing")
+def games_missing(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    good = [c for c in db.query(Card).filter(Card.user_id == user.id).all()
+            if c.front.isalpha() and 3 <= len(c.front) <= 10]
+    random.shuffle(good)
+    rounds = []
+    for c in good[:MISSING_ROUNDS]:
+        w = c.front
+        pos = random.randrange(len(w))
+        correct = w[pos].lower()
+        blanked = w[:pos] + "·" + w[pos + 1:]
+        others = [x for x in string.ascii_lowercase if x != correct]
+        random.shuffle(others)
+        options = [correct] + others[:2]
+        random.shuffle(options)
+        rounds.append({"blanked": blanked, "correct": correct, "options": options, "clue": c.back})
+    return render(request, "games_missing.html", db=db,
+                  rounds_json=json.dumps(rounds, ensure_ascii=False), has_rounds=bool(rounds))
+
+
+@router.get("/games/speed")
+def games_speed(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    cards = db.query(Card).filter(Card.user_id == user.id).all()
+    if len(cards) < 3:
+        rounds = []
+    else:
+        fronts = [c.front for c in cards]
+        backs = [c.back for c in cards]
+        seq = cards[:]
+        while len(seq) < SPEED_ROUNDS:
+            seq = seq + cards
+        random.shuffle(seq)
+        rounds = []
+        for c in seq[:SPEED_ROUNDS]:
+            if random.random() < 0.5:
+                prompt, correct, pool = c.front, c.back, backs
+            else:
+                prompt, correct, pool = c.back, c.front, fronts
+            distr = [x for x in pool if x.strip().lower() != correct.strip().lower()]
+            random.shuffle(distr)
+            options = [correct] + distr[:2]
+            random.shuffle(options)
+            rounds.append({"prompt": prompt, "correct": correct, "options": options})
+    return render(request, "games_speed.html", db=db,
+                  rounds_json=json.dumps(rounds, ensure_ascii=False), has_rounds=bool(rounds))
+
+
+@router.get("/games/memory")
+def games_memory(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    cards = db.query(Card).filter(Card.user_id == user.id).all()
+    random.shuffle(cards)
+    pairs = [{"id": i, "en": c.front, "ru": c.back} for i, c in enumerate(cards[:MEMORY_PAIRS])]
+    return render(request, "games_memory.html", db=db,
+                  pairs_json=json.dumps(pairs, ensure_ascii=False), has_pairs=len(pairs) >= 3)
+
+
 @router.post("/games/{game}/done")
 def games_done(game: str, data: DoneIn, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return JSONResponse({"error": "auth"}, status_code=401)
-    names = {"picture": "Слово-картинка", "audio": "Аудио", "pairs": "Пары"}
+    names = {"picture": "Слово-картинка", "audio": "Аудио", "pairs": "Пары",
+             "anagram": "Анаграмма", "hangman": "Виселица", "missing": "Пропущенная буква",
+             "speed": "На скорость", "memory": "Мемори"}
     if game not in names:
         return JSONResponse({"error": "unknown"}, status_code=404)
     touch_session(db, user.id, f"game_{game}", f"{names[game]}: {data.solved}/{data.total}")

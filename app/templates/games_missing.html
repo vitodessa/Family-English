@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Пропущенная буква — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/games">← Игры</a></div>
+<h1>Пропущенная буква 🔤</h1>
+<p class="muted">Какая буква пропущена? Подсказка — перевод.</p>
+
+{% if not has_rounds %}
+  <div class="form-card"><p class="muted">Пока мало слов — поучи карточки.</p>
+    <a class="btn primary" href="/study">К карточкам</a></div>
+{% else %}
+<div id="game" class="quiz" data-rounds='{{ rounds_json }}'>
+  <div class="chal-hud"><span class="chal-progress" id="progress"></span><span>Счёт: <span id="score">0</span></span></div>
+  <div class="miss-word" id="blanked"></div>
+  <div class="spell-word-clue center" id="clue"></div>
+  <div id="options"></div>
+</div>
+<div id="end" class="chal-end" hidden>
+  <div class="big">🏆</div><h2>Готово!</h2><p class="muted" id="end-score"></p>
+  <div class="cta" style="justify-content:center">
+    <a class="btn primary big-btn" href="/games/missing">Ещё раз</a><a class="btn" href="/games">К играм</a>
+  </div>
+</div>
+<script>
+(function(){
+  const rounds=JSON.parse(document.getElementById('game').dataset.rounds||'[]');
+  const gEl=document.getElementById('game'), endEl=document.getElementById('end');
+  const progEl=document.getElementById('progress'), scoreEl=document.getElementById('score');
+  const blankedEl=document.getElementById('blanked'), clueEl=document.getElementById('clue'), optsEl=document.getElementById('options');
+  let i=0, score=0, locked=false;
+  const norm=s=>(s||'').trim().toLowerCase();
+  function render(){
+    locked=false; const r=rounds[i];
+    progEl.textContent=(i+1)+' / '+rounds.length; scoreEl.textContent=score;
+    blankedEl.innerHTML=''; for(const ch of r.blanked){ const s=document.createElement('span');
+      s.className='miss-ch'+(ch==='·'?' slot':''); s.textContent=ch==='·'?'?':ch; blankedEl.appendChild(s); }
+    clueEl.textContent=r.clue;
+    optsEl.innerHTML='';
+    r.options.forEach(opt=>{ const b=document.createElement('button'); b.type='button'; b.className='opt';
+      b.innerHTML=opt+'<span class="mark"></span>'; b.onclick=()=>choose(b,opt,r.correct); optsEl.appendChild(b); });
+  }
+  function choose(btn,opt,correct){
+    if(locked) return; locked=true; const ok=norm(opt)===norm(correct);
+    Array.from(optsEl.children).forEach(b=>{ b.disabled=true; if(norm(b.textContent)===norm(correct)) b.classList.add('correct'); });
+    if(ok){ score++; btn.querySelector('.mark').textContent='✓'; } else { btn.classList.add('wrong'); btn.querySelector('.mark').textContent='✗'; }
+    scoreEl.textContent=score;
+    setTimeout(()=>{ i++; if(i>=rounds.length) finish(); else render(); }, ok?600:1000);
+  }
+  function finish(){ gEl.hidden=true; endEl.hidden=false;
+    document.getElementById('end-score').textContent='Счёт: '+score+' из '+rounds.length;
+    fetch('/games/missing/done',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({solved:score,total:rounds.length})}).catch(()=>{}); }
+  render();
+})();
+</script>
+{% endif %}
+{% endblock %}

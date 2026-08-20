@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Анаграмма — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/games">← Игры</a></div>
+<h1>Анаграмма 🔀</h1>
+<p class="muted">Из перемешанных букв собери слово (подсказка — перевод).</p>
+
+{% if not has_rounds %}
+  <div class="form-card"><p class="muted">Пока мало слов — поучи карточки.</p>
+    <a class="btn primary" href="/study">К карточкам</a></div>
+{% else %}
+<div id="game" data-rounds='{{ rounds_json }}'>
+  <div class="chal-hud"><span class="chal-progress" id="progress"></span><span>Счёт: <span id="score">0</span></span></div>
+  <div class="spell-clue"><div class="spell-word-clue" id="clue"></div></div>
+  <div class="anagram-scr" id="scr"></div>
+  <div class="center">
+    <input type="text" id="ans" autocomplete="off" autocapitalize="off" placeholder="твой ответ" style="max-width:260px;text-align:center">
+    <div style="margin-top:10px"><button class="btn primary" id="check" type="button">Проверить</button></div>
+  </div>
+  <p class="muted center" id="hint" style="min-height:1.4em;margin-top:10px"></p>
+</div>
+<div id="end" class="chal-end" hidden>
+  <div class="big">🏆</div><h2>Готово!</h2><p class="muted" id="end-score"></p>
+  <div class="cta" style="justify-content:center">
+    <a class="btn primary big-btn" href="/games/anagram">Ещё раз</a><a class="btn" href="/games">К играм</a>
+  </div>
+</div>
+<script>
+(function(){
+  const rounds=JSON.parse(document.getElementById('game').dataset.rounds||'[]');
+  const gEl=document.getElementById('game'), endEl=document.getElementById('end');
+  const progEl=document.getElementById('progress'), scoreEl=document.getElementById('score');
+  const clueEl=document.getElementById('clue'), scrEl=document.getElementById('scr');
+  const ans=document.getElementById('ans'), hint=document.getElementById('hint');
+  let i=0, score=0, locked=false;
+  const shuffle=a=>{ for(let x=a.length-1;x>0;x--){const j=Math.floor(Math.random()*(x+1));[a[x],a[j]]=[a[j],a[x]];} return a; };
+  function render(){
+    locked=false; hint.textContent=''; ans.value=''; ans.disabled=false;
+    const r=rounds[i]; progEl.textContent=(i+1)+' / '+rounds.length; scoreEl.textContent=score;
+    clueEl.textContent=r.clue;
+    let s=shuffle(r.word.split('')); if(s.join('')===r.word) s=shuffle(s);
+    scrEl.innerHTML=''; s.forEach(ch=>{ const t=document.createElement('span'); t.className='scr-tile'; t.textContent=ch; scrEl.appendChild(t); });
+    ans.focus();
+  }
+  function check(){
+    if(locked) return;
+    const r=rounds[i];
+    if(ans.value.trim().toLowerCase()===r.word.toLowerCase()){
+      locked=true; ans.disabled=true; score++; scoreEl.textContent=score;
+      hint.innerHTML='<span style="color:var(--good)">✓ Верно!</span>';
+      setTimeout(next, 650);
+    } else {
+      hint.innerHTML='<span style="color:var(--again)">Не то — попробуй ещё</span>';
+    }
+  }
+  function next(){ i++; if(i>=rounds.length) finish(); else render(); }
+  function finish(){ gEl.hidden=true; endEl.hidden=false;
+    document.getElementById('end-score').textContent='Счёт: '+score+' из '+rounds.length;
+    fetch('/games/anagram/done',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({solved:score,total:rounds.length})}).catch(()=>{}); }
+  document.getElementById('check').onclick=check;
+  ans.addEventListener('keydown',e=>{ if(e.key==='Enter') check(); });
+  render();
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Мемори — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/games">← Игры</a></div>
+<h1>Мемори 🧠</h1>
+<p class="muted">Открывай по две карточки и находи пары «слово — перевод».</p>
+
+{% if not has_pairs %}
+  <div class="form-card"><p class="muted">Пока мало слов — поучи карточки.</p>
+    <a class="btn primary" href="/study">К карточкам</a></div>
+{% else %}
+<div id="game" data-pairs='{{ pairs_json }}'>
+  <div class="chal-hud"><span class="chal-progress" id="moves">Ходов: 0</span><span>Пар: <span id="found">0</span></span></div>
+  <div class="mem-grid" id="grid"></div>
+</div>
+<div id="end" class="chal-end" hidden>
+  <div class="big">🏆</div><h2>Все пары найдены!</h2><p class="muted" id="end-score"></p>
+  <div class="cta" style="justify-content:center">
+    <a class="btn primary big-btn" href="/games/memory">Ещё раз</a><a class="btn" href="/games">К играм</a>
+  </div>
+</div>
+<script>
+(function(){
+  const pairs=JSON.parse(document.getElementById('game').dataset.pairs||'[]');
+  const total=pairs.length, grid=document.getElementById('grid');
+  const movesEl=document.getElementById('moves'), foundEl=document.getElementById('found');
+  let deck=[], first=null, lock=false, found=0, moves=0;
+  const shuffle=a=>{ for(let x=a.length-1;x>0;x--){const j=Math.floor(Math.random()*(x+1));[a[x],a[j]]=[a[j],a[x]];} return a; };
+  pairs.forEach(p=>{ deck.push({id:p.id,text:p.en}); deck.push({id:p.id,text:p.ru}); });
+  shuffle(deck);
+
+  deck.forEach(card=>{
+    const el=document.createElement('button'); el.type='button'; el.className='mem-card';
+    el.textContent='?'; el.dataset.id=card.id;
+    el.onclick=()=>flip(el,card);
+    grid.appendChild(el);
+  });
+
+  function flip(el,card){
+    if(lock || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+    el.classList.add('flipped'); el.textContent=card.text;
+    if(!first){ first={el,card}; return; }
+    moves++; movesEl.textContent='Ходов: '+moves; lock=true;
+    if(first.card.id===card.id && first.el!==el){
+      const a=first.el, b=el; first=null;
+      setTimeout(()=>{ a.classList.add('matched'); b.classList.add('matched'); lock=false;
+        foundEl.textContent=(++found); if(found===total) finish(); }, 350);
+    } else {
+      const a=first.el, b=el; first=null;
+      setTimeout(()=>{ a.classList.remove('flipped'); b.classList.remove('flipped');
+        a.textContent='?'; b.textContent='?'; lock=false; }, 800);
+    }
+  }
+  function finish(){
+    document.getElementById('game').hidden=true; document.getElementById('end').hidden=false;
+    document.getElementById('end-score').textContent='Ходов: '+moves;
+    fetch('/games/memory/done',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({solved:total,total})}).catch(()=>{});
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}
