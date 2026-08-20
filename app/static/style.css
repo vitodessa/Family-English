@@ -113,11 +113,16 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   border-radius:16px;padding:24px;box-shadow:var(--shadow);white-space:pre-wrap}
 .reader-text .w{cursor:pointer;border-radius:4px;padding:0 1px}
 .reader-text .w:hover{background:#eef0ff}
-.wpop{position:absolute;z-index:50;background:var(--card);border:1px solid var(--line);
-  border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;min-width:150px;max-width:240px}
-.wpop-word{font-size:1.1rem;display:flex;align-items:center;gap:8px}
-.wpop-tr{color:var(--primary);font-weight:600;margin:6px 0 10px;min-height:1.2em}
-.wpop .btn{width:100%;padding:8px}
+.reader-text .w.added{background:#e7f7ee;box-shadow:inset 0 -2px 0 var(--good)}
+.wtip{position:absolute;z-index:50;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;box-shadow:var(--shadow);padding:8px 12px;display:flex;align-items:center;
+  gap:8px;font-size:1rem;max-width:280px}
+.wtip-word{font-weight:700}
+.wtip-tr{color:var(--primary);font-weight:600}
+.rtoast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);
+  color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:var(--shadow);
+  opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.rtoast.show{opacity:1}
 
 /* study quiz (активное припоминание) */
 .quiz{max-width:600px;margin:10px auto}
