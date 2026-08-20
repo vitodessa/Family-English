@@ -23,7 +23,6 @@ jobs:
     name: Деплой
     needs: sanity
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - name: Деплой по SSH
         uses: appleboy/ssh-action@v1.0.3

@@ -8,6 +8,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+# Дымовой тест гоняется внутри контейнера после деплоя (см. deploy.yml)
+COPY smoke_test.py .
 
 # Папка под SQLite — монтируется как постоянный том (см. docker-compose.yml)
 RUN mkdir -p /app/data
