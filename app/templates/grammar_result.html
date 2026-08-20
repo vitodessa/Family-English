@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Результат — Грамматика{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Результат: {{ correct }} / {{ total }}</h1>
+  <p class="muted">{{ topic.name }}</p>
+</section>
+
+<div class="card">
+  {% for r in results %}
+  <div style="padding:10px 0;border-top:1px solid var(--line)">
+    <div class="pre">{{ r.sentence.replace('___', '[' + r.answer + ']') }}</div>
+    {% if r.ok %}
+      <div class="ok" style="display:inline-block;margin-top:6px">✓ верно</div>
+    {% else %}
+      <div style="margin-top:6px">
+        <span style="color:var(--again)">твой ответ: {{ r.given or '—' }}</span> ·
+        <b style="color:var(--good)">правильно: {{ r.answer }}</b>
+      </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="cta" style="justify-content:flex-start;margin-top:22px">
+  <a class="btn primary" href="/grammar/{{ topic.id }}/practice">Ещё практика</a>
+  <a class="btn" href="/grammar/{{ topic.id }}">Теория</a>
+  <a class="btn" href="/speaking/review">📊 Разбор ошибок</a>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Практика: {{ topic.name }}{% endblock %}
+{% block content %}
+<div class="read-head">
+  <a class="btn" href="/grammar/{{ topic.id }}">← Теория</a>
+  <span class="lvl-badge">{{ current_user.cefr_level }}</span>
+</div>
+<h1>Впиши правильную форму</h1>
+<p class="muted">{{ topic.name }}</p>
+
+{% if not items %}
+  <div class="error" style="margin-top:14px">Не удалось собрать упражнения.
+    <a href="/grammar/{{ topic.id }}/practice">Попробовать ещё раз</a></div>
+{% else %}
+<form method="post" action="/grammar/{{ topic.id }}/check" class="cloze-form">
+  {% for it in items %}
+  <div class="cloze-item">
+    <div class="cloze-sentence">{{ it.sentence }}</div>
+    <input type="text" name="given" placeholder="твой ответ" autocomplete="off" autocapitalize="off" required>
+    {% if it.hint %}<span class="cloze-hint">подсказка: {{ it.hint }}</span>{% endif %}
+    <input type="hidden" name="sentence" value="{{ it.sentence }}">
+    <input type="hidden" name="answer" value="{{ it.answer }}">
+  </div>
+  {% endfor %}
+  <button class="btn primary big-btn" type="submit">Проверить</button>
+</form>
+{% endif %}
+{% endblock %}

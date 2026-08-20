@@ -59,3 +59,8 @@ def reading_enabled() -> bool:
 def writing_enabled() -> bool:
     """Письму нужен только Claude (разбор написанного)."""
     return bool(ANTHROPIC_API_KEY)
+
+
+def grammar_enabled() -> bool:
+    """Грамматике нужен только Claude (теория + клоуз-практика)."""
+    return bool(ANTHROPIC_API_KEY)

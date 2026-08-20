@@ -127,6 +127,22 @@ class Mistake(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+class GrammarLesson(Base):
+    """Теория по грамматической теме под уровень (генерируется AI, кэшируется).
+
+    Практика (клоуз-упражнения) генерируется на лету; ошибки пишутся в Mistake
+    с grammar_topic_id — так «сам вырастает» грамматический дашборд.
+    """
+
+    __tablename__ = "grammar_lessons"
+
+    id = Column(Integer, primary_key=True)
+    grammar_topic_id = Column(Integer, ForeignKey("grammar_topics.id"), nullable=False, index=True)
+    cefr_level = Column(String, index=True)
+    theory = Column(Text, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class ContentItem(Base):
     """Текст для чтения. В v1 генерируется AI под уровень; читается с тап-переводом.
 

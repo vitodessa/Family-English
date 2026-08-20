@@ -97,6 +97,14 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* grammar (клоуз-практика) */
+.cloze-form{max-width:640px}
+.cloze-item{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin:12px 0;box-shadow:var(--shadow)}
+.cloze-sentence{font-size:1.15rem;margin-bottom:10px}
+.cloze-item input[type=text]{max-width:280px;margin:0}
+.cloze-hint{display:inline-block;color:var(--muted);font-size:.85rem;margin-top:8px}
+
 /* writing (письмо: задание → разбор) */
 .task-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
   padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}

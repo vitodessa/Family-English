@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Грамматика — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Грамматика</h1>
+  <p class="muted">Теория под твой уровень + практика «впиши правильную форму».</p>
+</section>
+
+{% if not enabled %}
+  <div class="form-card">
+    <p class="muted">Грамматика пока не настроена — не задан <code>ANTHROPIC_API_KEY</code> на сервере.</p>
+    <a class="btn" href="/dashboard">← В кабинет</a>
+  </div>
+{% else %}
+  <div class="read-list">
+    {% for t in topics %}
+    <a class="read-card" href="/grammar/{{ t.id }}">
+      <span class="rc-title">{{ t.name }}</span>
+      {% if t.description %}<span class="rc-snippet">{{ t.description }}</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}
