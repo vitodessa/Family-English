@@ -117,6 +117,7 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
 .wtip{position:absolute;z-index:50;background:var(--card);border:1px solid var(--line);
   border-radius:10px;box-shadow:var(--shadow);padding:8px 12px;display:flex;align-items:center;
   gap:8px;font-size:1rem;max-width:280px}
+.wtip[hidden]{display:none}
 .wtip-word{font-weight:700}
 .wtip-tr{color:var(--primary);font-weight:600}
 .rtoast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);
