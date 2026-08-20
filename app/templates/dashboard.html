@@ -17,6 +17,17 @@
   <a class="btn big-btn" href="/lesson">Начать урок</a>
 </div>
 
+<div class="leaderboard">
+  <div class="lb-title">🏆 Токены семьи <a class="lb-more" href="/family">подробнее →</a></div>
+  {% for p in leaderboard %}
+  <div class="lb-row {% if p.me %}me{% endif %}">
+    <span class="lb-rank">{% if loop.index0 == 0 %}🥇{% elif loop.index0 == 1 %}🥈{% elif loop.index0 == 2 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+    <span class="lb-name">{{ p.name }}{% if p.me %} <span class="muted">— ты</span>{% endif %}</span>
+    <span class="lb-tok">🪙 {{ p.tokens }}</span>
+  </div>
+  {% endfor %}
+</div>
+
 <section class="modules">
   {# Карточки — готовый блок. Подсвечиваем, когда есть что повторить. #}
   <a class="mod c-cards {% if due_count %}accent{% endif %}" href="/study">

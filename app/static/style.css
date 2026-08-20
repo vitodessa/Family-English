@@ -118,6 +118,18 @@ input:focus,select:focus{outline:2px solid var(--primary);border-color:var(--pri
 .chk-text{font-weight:600;font-size:1.05rem}
 .chk-item.done .chk-text{color:#1c7a4b}
 
+/* leaderboard (токены семьи на дашборде) */
+.leaderboard{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:16px 18px;box-shadow:var(--shadow);margin:0 0 22px}
+.lb-title{font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.lb-more{font-size:.85rem;font-weight:600}
+.lb-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.lb-row:nth-of-type(2){border-top:0}
+.lb-rank{width:30px;text-align:center;font-weight:800;font-size:1.05rem}
+.lb-name{flex:1;font-weight:600}
+.lb-tok{font-weight:800;color:#ff9d2e}
+.lb-row.me{background:#fff6e6;border-radius:10px;margin:2px -8px;padding:8px}
+
 /* tokens (мотивация: токены → деньги) */
 .dash-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .token-chip{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#ffd24a,#ff9d2e);

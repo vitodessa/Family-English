@@ -17,7 +17,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.emoji_map import emoji_for
 from app.fsrs_service import apply_review
-from app.models import Card, LearningEvent, Word
+from app.models import Card, LearningEvent, User, Word
 from app.seed import top_up_deck
 from app.templating import render
 from app.token_service import balance as token_balance
@@ -137,8 +137,16 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     goal = user.daily_goal or 0
     goal_progress = min(round(reviews_today / goal * 100), 100) if goal else 0
 
+    # Таблица лидеров семьи по токенам (соревновательный элемент).
+    leaderboard = sorted(
+        [{"name": u.name, "tokens": token_balance(db, u.id), "me": u.id == user.id}
+         for u in db.query(User).all()],
+        key=lambda p: -p["tokens"],
+    )
+
     return render(
         request, "dashboard.html", db=db,
+        leaderboard=leaderboard,
         total_cards=total_cards,
         due_count=due_count,
         learned=learned,
