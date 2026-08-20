@@ -135,7 +135,12 @@ def _parse(raw: str) -> dict[str, Any]:
     return obj
 
 
-def _save_turn(db: DBSession, user: User, session_id: int, parsed: dict[str, Any]) -> None:
+def _save_turn(db: DBSession, user: User, session_id: int, parsed: dict[str, Any],
+               source_module: str = "speaking") -> None:
+    """Сохранить разбор в «единую память»: ошибки → Mistake, новые слова → карточки.
+
+    Используется и Speaking, и Writing (source_module помечает происхождение ошибки).
+    """
     # Ошибки → журнал ошибок
     for m in parsed.get("mistakes", []):
         if not m.get("original") or not m.get("correction"):
@@ -146,7 +151,7 @@ def _save_turn(db: DBSession, user: User, session_id: int, parsed: dict[str, Any
             correction=str(m.get("correction"))[:1000],
             explanation=str(m.get("explanation", ""))[:1000],
             category=str(m.get("category", "other"))[:40],
-            source_module="speaking",
+            source_module=source_module,
         ))
 
     # Новые слова → каталог + карточки этому ученику (вот «единая память»).

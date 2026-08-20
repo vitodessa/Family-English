@@ -97,6 +97,17 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
+/* writing (письмо: задание → разбор) */
+.task-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+.task-label{font-size:.72rem;text-transform:uppercase;color:var(--muted);font-weight:700;letter-spacing:.04em}
+.task-text{font-size:1.2rem;font-weight:600;margin:6px 0 10px}
+.write-form textarea{min-height:180px;font-size:1.05rem;line-height:1.6}
+.write-form .btn{margin-top:12px}
+.fb-card{background:#eef0ff;border:1px solid #dfe2ff;border-radius:14px;padding:14px 18px;
+  font-size:1.05rem;margin:8px 0 18px}
+.pre{white-space:pre-wrap;line-height:1.6;margin:0}
+
 /* reading (чтение с тап-переводом) */
 .gen-bar{display:flex;gap:10px;margin:14px 0 4px;flex-wrap:wrap}
 .gen-bar input{flex:1;min-width:220px;margin:0}

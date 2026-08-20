@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Письмо — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Письмо</h1>
+  <p class="muted">Задание под твой уровень. Напиши ответ по-английски — AI мягко разберёт и подскажет.</p>
+</section>
+
+{% if not enabled %}
+  <div class="form-card">
+    <p class="muted">Письмо пока не настроено — не задан <code>ANTHROPIC_API_KEY</code> на сервере.</p>
+    <a class="btn" href="/dashboard">← В кабинет</a>
+  </div>
+{% else %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div class="task-card">
+    <div class="task-label">Задание · {{ current_user.cefr_level }}</div>
+    <div class="task-text">{{ task }}</div>
+    <a class="muted" href="/writing" style="font-size:.85rem">↻ Другое задание</a>
+  </div>
+  <form method="post" action="/writing/review" class="write-form">
+    <input type="hidden" name="task" value="{{ task }}">
+    <textarea name="text" rows="8" placeholder="Write your answer in English…" required>{{ draft or '' }}</textarea>
+    <button class="btn primary big-btn" type="submit">Проверить</button>
+  </form>
+{% endif %}
+{% endblock %}

@@ -54,3 +54,8 @@ def speaking_enabled() -> bool:
 def reading_enabled() -> bool:
     """Чтению нужен только Claude (генерация текста + перевод слова)."""
     return bool(ANTHROPIC_API_KEY)
+
+
+def writing_enabled() -> bool:
+    """Письму нужен только Claude (разбор написанного)."""
+    return bool(ANTHROPIC_API_KEY)

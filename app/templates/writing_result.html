@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Разбор письма — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Разбор письма</h1>
+  <p class="muted">Задание: {{ task }}</p>
+</section>
+
+{% if result.feedback %}
+  <div class="fb-card">💬 {{ result.feedback }}</div>
+{% endif %}
+
+<div class="grid-2">
+  <div class="card">
+    <h3>Твой текст</h3>
+    <p class="pre">{{ original }}</p>
+  </div>
+  <div class="card">
+    <h3>Исправленный вариант</h3>
+    <p class="pre">{{ result.corrected }}</p>
+  </div>
+</div>
+
+{% if result.mistakes %}
+  <h2 style="margin-top:26px">Ошибки · {{ result.mistakes|length }}</h2>
+  <div class="card" style="margin-top:12px">
+    {% for m in result.mistakes %}
+    <div style="padding:8px 0;border-top:1px solid var(--line)">
+      <div>
+        <span style="color:var(--again)">{{ m.original }}</span> →
+        <b style="color:var(--good)">{{ m.correction }}</b>
+        <span class="lvl-badge" style="margin-left:6px">{{ m.category }}</span>
+      </div>
+      {% if m.explanation %}<div class="muted" style="font-size:.9rem">{{ m.explanation }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="ok" style="margin-top:20px">Ошибок не нашлось — отлично! 🎉</p>
+{% endif %}
+
+{% if result.new_vocab %}
+  <h2 style="margin-top:24px">Новые слова → в карточки</h2>
+  <div class="card" style="margin-top:12px">
+    {% for v in result.new_vocab %}
+    <div style="padding:6px 0">
+      <b>{{ v.word }}</b> — {{ v.translation }}
+      {% if v.example %}<div class="muted" style="font-size:.9rem">{{ v.example }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="cta" style="justify-content:flex-start;margin-top:26px">
+  <a class="btn primary" href="/writing">Ещё задание</a>
+  <a class="btn" href="/speaking/review">📊 Разбор ошибок</a>
+  <a class="btn" href="/dashboard">В кабинет</a>
+</div>
+{% endblock %}
