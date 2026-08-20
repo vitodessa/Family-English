@@ -3,18 +3,57 @@
 {% block content %}
 <section class="dash-head">
   <h1>Привет, {{ current_user.name }}!</h1>
-  <p class="muted">Уровень {{ current_user.cefr_level }}</p>
+  <p class="muted">Уровень {{ current_user.cefr_level }} · сегодня {{ reviews_today }} / {{ daily_goal }} повторений</p>
 </section>
 
-<section class="stats">
-  <div class="stat big {% if due_count %}accent{% endif %}">
-    <div class="num">{{ due_count }}</div>
-    <div class="lbl">к повторению сейчас</div>
+<section class="modules">
+  {# Карточки — готовый блок. Подсвечиваем, когда есть что повторить. #}
+  <a class="mod {% if due_count %}accent{% endif %}" href="/study">
+    {% if due_count %}<span class="badge">{{ due_count }}</span>{% endif %}
+    <div class="ico">🗂</div>
+    <div class="name">Карточки</div>
+    <div class="sub">{% if due_count %}{{ due_count }} к повторению сейчас{% else %}на сегодня всё повторено{% endif %}</div>
+  </a>
+
+  <a class="mod" href="/speaking">
+    <div class="ico">🎤</div>
+    <div class="name">Разговор</div>
+    <div class="sub">Голосовой собеседник AI</div>
+  </a>
+
+  <div class="mod soon">
+    <span class="badge">скоро</span>
+    <div class="ico">📖</div>
+    <div class="name">Чтение</div>
+    <div class="sub">Тексты с переводом по тапу</div>
   </div>
-  <div class="stat"><div class="num">{{ total_cards }}</div><div class="lbl">всего слов</div></div>
-  <div class="stat"><div class="num">{{ learned }}</div><div class="lbl">в долгой памяти</div></div>
-  <div class="stat"><div class="num">{{ retention }}%</div><div class="lbl">удержание</div></div>
+
+  <div class="mod soon">
+    <span class="badge">скоро</span>
+    <div class="ico">✍️</div>
+    <div class="name">Письмо</div>
+    <div class="sub">Проверка текста с разбором</div>
+  </div>
+
+  <div class="mod soon">
+    <span class="badge">скоро</span>
+    <div class="ico">🎧</div>
+    <div class="name">Аудирование</div>
+    <div class="sub">Аудио под твой уровень</div>
+  </div>
+
+  <div class="mod soon">
+    <span class="badge">скоро</span>
+    <div class="ico">🎬</div>
+    <div class="name">Видео</div>
+    <div class="sub">Видео с субтитрами</div>
+  </div>
 </section>
+
+<div class="cta" style="justify-content:flex-start;margin:0 0 26px">
+  <a class="btn" href="/my-words">+ Добавить слова из урока</a>
+  <a class="btn" href="/speaking/review">📊 Разбор речи</a>
+</div>
 
 <section class="goal">
   <div class="goal-row">
@@ -24,14 +63,9 @@
   <div class="bar"><div class="bar-fill" style="width: {{ goal_progress }}%"></div></div>
 </section>
 
-<div class="cta">
-  {% if due_count %}
-    <a class="btn primary big-btn" href="/study">Учить {{ due_count }} карточек →</a>
-  {% else %}
-    <p class="done">🎉 На сегодня всё повторено. Возвращайся позже!</p>
-    <a class="btn" href="/study">Всё равно открыть учёбу</a>
-  {% endif %}
-  <a class="btn" href="/my-words">+ Добавить слова из урока</a>
-  <a class="btn" href="/speaking">🎤 Разговор с AI</a>
-</div>
+<section class="stats" style="grid-template-columns:repeat(3,1fr)">
+  <div class="stat"><div class="num">{{ total_cards }}</div><div class="lbl">всего слов</div></div>
+  <div class="stat"><div class="num">{{ learned }}</div><div class="lbl">в долгой памяти</div></div>
+  <div class="stat"><div class="num">{{ retention }}%</div><div class="lbl">удержание</div></div>
+</section>
 {% endblock %}

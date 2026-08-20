@@ -79,6 +79,24 @@ input:focus,select:focus{outline:2px solid var(--primary);border-color:var(--pri
 .bar-fill{height:100%;background:var(--good);border-radius:8px;transition:width .3s}
 .done{font-size:1.1rem}
 
+/* module launcher (плитки блоков обучения на дашборде) */
+.modules{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0 26px}
+.mod{position:relative;display:flex;flex-direction:column;gap:2px;
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:22px 20px;box-shadow:var(--shadow);color:var(--ink);
+  transition:transform .12s,border-color .12s}
+a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0}
+.mod .ico{font-size:2.1rem;line-height:1}
+.mod .name{font-size:1.2rem;font-weight:700;margin-top:8px}
+.mod .sub{color:var(--muted);font-size:.9rem}
+.mod.accent{background:var(--primary);border-color:var(--primary)}
+.mod.accent .name,.mod.accent .ico{color:#fff}
+.mod.accent .sub{color:#dcd8ff}
+.mod.soon{opacity:.55;cursor:default;box-shadow:none}
+.mod .badge{position:absolute;top:14px;right:14px;font-size:.72rem;font-weight:700;
+  padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
+.mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
+
 /* study flashcard */
 .flash{background:var(--card);border:1px solid var(--line);border-radius:20px;
   box-shadow:var(--shadow);padding:54px 24px;margin:22px auto;max-width:560px;text-align:center}
