@@ -7,13 +7,14 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import reading_service
 from app.config import CEFR_ORDER, reading_enabled
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import ContentItem
+from app.models import ContentItem, Word
 from app.seed import add_words_for_user
 from app.templating import render
 
@@ -99,6 +100,14 @@ def reading_translate(data: TranslateIn, request: Request, db: Session = Depends
     word = (data.word or "").strip()
     if not word:
         return JSONResponse({"translation": ""})
+
+    # Быстрый путь: слово уже в каталоге — отдаём мгновенно, без вызова AI.
+    known = (db.query(Word)
+             .filter(func.lower(Word.front) == word.lower())
+             .first())
+    if known:
+        return {"word": word, "translation": known.back}
+
     try:
         tr = reading_service.translate_word(word, data.sentence, user.cefr_level or "")
     except Exception as e:  # noqa: BLE001

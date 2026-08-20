@@ -13,7 +13,6 @@
 </p>
 
 <div id="tip" class="wtip" hidden>
-  <span id="tip-word" class="wtip-word"></span>
   <button id="tip-audio" class="audio-btn" type="button" title="Послушать">🔊</button>
   <span id="tip-tr" class="wtip-tr">…</span>
 </div>
@@ -31,9 +30,8 @@
     else textEl.appendChild(document.createTextNode(p));
   });
 
-  const tip=document.getElementById('tip'), tipWord=document.getElementById('tip-word'),
-        tipTr=document.getElementById('tip-tr'), tipAudio=document.getElementById('tip-audio'),
-        toast=document.getElementById('toast');
+  const tip=document.getElementById('tip'), tipTr=document.getElementById('tip-tr'),
+        tipAudio=document.getElementById('tip-audio'), toast=document.getElementById('toast');
   const canHover = window.matchMedia('(hover: hover)').matches;
   const cache = {};                 // слово → перевод (чтобы не дёргать API повторно)
   let showTimer=null, hideTimer=null, shownFor=null, tipWordText='';
@@ -47,7 +45,6 @@
 
   function showTip(span){
     const word = span.textContent; tipWordText = word;
-    tipWord.textContent = word;
     tipTr.textContent = (cache[word] !== undefined && cache[word] !== null) ? (cache[word] || '—') : '…';
     tip.hidden = false; shownFor = span;
     const r = span.getBoundingClientRect();
@@ -82,7 +79,7 @@
     textEl.addEventListener('mouseover', e => {
       if(!e.target.classList.contains('w')) return;
       clearTimeout(hideTimer); clearTimeout(showTimer);
-      const span = e.target; showTimer = setTimeout(() => showTip(span), 280);
+      const span = e.target; showTimer = setTimeout(() => showTip(span), 150);
     });
     textEl.addEventListener('mouseout', e => {
       if(!e.target.classList.contains('w')) return;

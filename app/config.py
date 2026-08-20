@@ -36,9 +36,9 @@ CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"]
 # Мозг — Claude. Голос — ElevenLabs. Ключи только из окружения (.env), не в коде.
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
-# Дешёвая модель для простых задач (перевод слова при чтении). По умолчанию — та же,
-# что основная (безопасно); можно указать Haiku через окружение ради экономии.
-ANTHROPIC_MODEL_CHEAP: str = os.getenv("ANTHROPIC_MODEL_CHEAP", ANTHROPIC_MODEL)
+# Дешёвая быстрая модель для простых задач (перевод слова при чтении). Пусто/не задано —
+# берём основную (безопасно); можно указать Haiku через окружение ради скорости и экономии.
+ANTHROPIC_MODEL_CHEAP: str = os.getenv("ANTHROPIC_MODEL_CHEAP") or ANTHROPIC_MODEL
 
 ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
 # Голос по умолчанию (Rachel) и быстрая модель. Можно поменять через окружение.
