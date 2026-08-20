@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}16 времён — Грамматика{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/grammar">← Грамматика</a></div>
+<h1>16 времён английского 🕐</h1>
+<p class="muted">Строки — когда (Было / Есть / Будет / Полагал). Столбцы — как (факт / процесс / результат / долго).</p>
+
+<div class="tenses-wrap">
+<table class="tenses">
+  <tr>
+    <th></th>
+    <th>Вообще<br><span class="muted">Simple</span></th>
+    <th>Процесс<br><span class="muted">Continuous</span></th>
+    <th>Результат<br><span class="muted">Perfect</span></th>
+    <th>«Долго»<br><span class="muted">Perfect Continuous</span></th>
+  </tr>
+  <tr>
+    <th class="rowh">Есть<br><span class="muted">настоящее</span></th>
+    <td><b>V1 / Vs</b><br><span class="muted">do/does + V1 (−/?)</span></td>
+    <td>am/is/are <b>Ving</b></td>
+    <td>have/has <b>V3</b></td>
+    <td>have/has been <b>Ving</b></td>
+  </tr>
+  <tr>
+    <th class="rowh">Было<br><span class="muted">прошедшее</span></th>
+    <td><b>V2</b><br><span class="muted">did + V1 (−/?)</span></td>
+    <td>was/were <b>Ving</b></td>
+    <td>had <b>V3</b></td>
+    <td>had been <b>Ving</b></td>
+  </tr>
+  <tr>
+    <th class="rowh">Будет<br><span class="muted">будущее</span></th>
+    <td>will <b>V1</b></td>
+    <td>will be <b>Ving</b></td>
+    <td>will have <b>V3</b></td>
+    <td>will have been <b>Ving</b></td>
+  </tr>
+  <tr>
+    <th class="rowh">Полагал,<br>что будет</th>
+    <td>would <b>V1</b></td>
+    <td>would be <b>Ving</b></td>
+    <td>would have <b>V3</b></td>
+    <td>would have been <b>Ving</b></td>
+  </tr>
+</table>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <b>Обозначения:</b>
+  <span class="muted">V1 — базовая форма (go) · Vs — +s (goes) · V2 — прошедшее (went) ·
+  V3 — причастие (gone) · Ving — форма с -ing (going)</span>
+</div>
+<p class="muted" style="margin-top:10px;font-size:.85rem">По материалам школы «Черчилль».</p>
+{% endblock %}

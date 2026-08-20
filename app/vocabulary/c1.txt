@@ -22,3 +22,55 @@ scrutiny|тщательное изучение
 advocate|отстаивать; сторонник
 resilient|стойкий, устойчивый
 subtle|тонкий, едва уловимый
+adverse|неблагоприятный
+aesthetic|эстетический
+alleviate|облегчать
+analogous|аналогичный
+anomaly|аномалия
+articulate|чётко выражать
+autonomy|автономия
+candid|откровенный
+cohesive|сплочённый
+commodity|товар
+compile|составлять
+conform|соответствовать
+consensus|консенсус
+conventional|общепринятый
+culminate|достигать кульминации
+deficit|дефицит
+depict|изображать
+deteriorate|ухудшаться
+disparity|неравенство
+elicit|вызывать
+empirical|эмпирический
+endorse|одобрять
+formulate|формулировать
+hierarchy|иерархия
+hypothesis|гипотеза
+impartial|беспристрастный
+implicit|подразумеваемый
+indispensable|незаменимый
+inference|вывод
+innate|врождённый
+integral|неотъемлемый
+intricate|запутанный
+intrinsic|внутренне присущий
+lucrative|прибыльный
+mitigate|смягчать
+nonetheless|тем не менее
+overt|явный
+paramount|первостепенный
+plausible|правдоподобный
+profound|глубокий
+proliferate|быстро расти
+rationale|обоснование
+reconcile|примирять
+redundant|избыточный
+refute|опровергать
+rigorous|строгий
+robust|устойчивый
+scrutinise|тщательно изучать
+tangible|осязаемый
+underlying|лежащий в основе
+undermine|подрывать
+viable|жизнеспособный

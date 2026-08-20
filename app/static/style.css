@@ -192,6 +192,16 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
 .test-opt:hover{background:#eef0ff}
 .test-opt input{margin-right:10px}
 
+/* grammar: справочники (16 времён, неправильные глаголы) */
+.tenses-wrap{overflow-x:auto;margin:12px 0}
+.tenses{width:100%;border-collapse:collapse;min-width:640px;background:var(--card);
+  border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.tenses th,.tenses td{border:1px solid var(--line);padding:12px 14px;text-align:center;vertical-align:middle}
+.tenses tr:first-child th{background:var(--primary);color:#fff}
+.tenses tr:first-child th .muted{color:#dcd8ff}
+.tenses .rowh{background:#f0f1f9;text-align:left;font-weight:700}
+.tenses td b{color:var(--primary)}
+
 /* grammar (CEFR-лесенка + клоуз-практика) */
 .grm-level{margin:26px 0 4px;display:flex;align-items:center;gap:10px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}

@@ -22,6 +22,34 @@ WORD_EMOJI = {
     "weather": "🌤️", "website": "🌐", "travel": "✈️", "remember": "🧠",
     "arrive": "🛬", "journey": "🧳", "country": "🗺️", "airport": "🛫",
     "hotel": "🏨", "ticket": "🎫",
+    # семья и люди
+    "mother": "👩", "father": "👨", "sister": "👧", "brother": "👦", "baby": "👶",
+    "boy": "👦", "girl": "👧", "man": "👨", "woman": "👩", "child": "🧒", "people": "👥",
+    # цвета
+    "red": "🔴", "blue": "🔵", "green": "🟢", "yellow": "🟡", "black": "⚫",
+    "white": "⚪", "brown": "🟤",
+    # природа
+    "sun": "☀️", "moon": "🌙", "star": "⭐", "sky": "☁️", "tree": "🌳", "flower": "🌸",
+    "rain": "🌧️", "snow": "❄️", "wind": "💨", "sea": "🌊", "river": "🏞️",
+    "mountain": "⛰️", "fire": "🔥",
+    # еда
+    "bread": "🍞", "milk": "🥛", "egg": "🥚", "apple": "🍎", "meat": "🥩", "fish": "🐟",
+    "tea": "🍵", "coffee": "☕", "sugar": "🍬", "salt": "🧂", "fruit": "🍓",
+    "soup": "🍲", "cake": "🍰",
+    # животные
+    "bird": "🐦", "cow": "🐄", "horse": "🐴", "pig": "🐷", "sheep": "🐑",
+    "chicken": "🐔", "rabbit": "🐰",
+    # дом и вещи
+    "bed": "🛏️", "chair": "🪑", "key": "🔑", "phone": "📱", "clock": "🕐", "cup": "☕",
+    "plate": "🍽️", "heart": "❤️", "ball": "⚽", "toy": "🧸", "gift": "🎁",
+    # места и транспорт
+    "train": "🚂", "bus": "🚌", "plane": "✈️", "bike": "🚲", "shop": "🏪",
+    "street": "🛣️", "park": "🌳", "garden": "🌷", "music": "🎵", "game": "🎮",
+    # время года
+    "spring": "🌷", "summer": "🏖️", "autumn": "🍂", "winter": "⛄",
+    # тело
+    "face": "🙂", "hair": "💇", "ear": "👂", "nose": "👃", "mouth": "👄",
+    "tooth": "🦷", "leg": "🦵", "finger": "👆",
 }
 
 

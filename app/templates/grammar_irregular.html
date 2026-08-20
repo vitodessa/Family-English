@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Неправильные глаголы — Грамматика{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/grammar">← Грамматика</a></div>
+<h1>Неправильные глаголы 📋</h1>
+<p class="muted">Три формы: базовая (V1) · прошедшее (V2) · причастие (V3). Всего {{ verbs|length }}.</p>
+
+<input type="text" id="filter" placeholder="🔎 поиск глагола…" autocomplete="off"
+       style="max-width:320px;margin:6px 0 12px">
+
+<div class="tenses-wrap">
+<table class="tbl" id="ivtable">
+  <tr><th>V1 (base)</th><th>V2 (past)</th><th>V3 (participle)</th><th>Перевод</th></tr>
+  {% for v in verbs %}
+  <tr><td><b>{{ v[0] }}</b></td><td>{{ v[1] }}</td><td>{{ v[2] }}</td><td class="muted">{{ v[3] }}</td></tr>
+  {% endfor %}
+</table>
+</div>
+
+<script>
+(function(){
+  const f=document.getElementById('filter'), rows=[...document.querySelectorAll('#ivtable tr')].slice(1);
+  f.oninput=()=>{ const q=f.value.trim().toLowerCase();
+    rows.forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };
+})();
+</script>
+{% endblock %}

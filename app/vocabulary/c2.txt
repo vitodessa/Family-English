@@ -22,3 +22,53 @@ vindicate|оправдывать, подтверждать правоту
 staunch|стойкий, непоколебимый
 esoteric|эзотерический, малопонятный
 scrupulous|щепетильный, добросовестный
+acumen|проницательность
+admonish|увещевать
+aberration|отклонение
+alacrity|рвение, готовность
+ameliorate|улучшать
+antithesis|антитеза
+arcane|тайный, малопонятный
+austere|строгий, суровый
+banal|банальный
+cacophony|какофония
+capricious|капризный
+circumspect|осмотрительный
+cogent|убедительный
+connoisseur|знаток
+conundrum|головоломка
+deference|почтение
+deleterious|вредный
+denigrate|очернять
+disparate|несопоставимый
+ebullient|жизнерадостный
+egregious|вопиющий
+enervate|обессиливать
+equanimity|невозмутимость
+fastidious|привередливый
+garrulous|болтливый
+hackneyed|избитый
+iconoclast|бунтарь, ниспровергатель
+idiosyncrasy|особенность, причуда
+inchoate|зачаточный
+ineffable|невыразимый
+insidious|коварный
+intransigent|непримиримый
+juxtaposition|сопоставление
+laconic|немногословный
+magnanimous|великодушный
+mellifluous|сладкозвучный
+obfuscate|запутывать
+ostensible|мнимый, показной
+panacea|панацея
+paradigm|парадигма
+perfunctory|поверхностный
+pernicious|пагубный
+pragmatism|прагматизм
+sagacious|проницательный
+sanguine|оптимистичный
+serendipity|счастливая случайность
+sycophant|льстец
+taciturn|молчаливый
+vicissitude|превратность
+zealous|ревностный

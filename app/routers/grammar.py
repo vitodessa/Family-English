@@ -16,6 +16,7 @@ from app.activity import touch_session
 from app.config import CEFR_ORDER, grammar_enabled
 from app.database import get_db
 from app.deps import get_current_user
+from app.irregular_verbs import IRREGULAR_VERBS
 from app.models import GrammarLesson, GrammarTopic, Mistake
 from app.templating import render
 
@@ -75,6 +76,22 @@ def grammar_home(request: Request, db: Session = Depends(get_db)):
 
     return render(request, "grammar.html", db=db, groups=groups, user_level=level,
                   suggested=suggested, enabled=grammar_enabled())
+
+
+@router.get("/grammar/tenses")
+def grammar_tenses(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    return render(request, "grammar_tenses.html", db=db)
+
+
+@router.get("/grammar/irregular")
+def grammar_irregular(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    return render(request, "grammar_irregular.html", db=db, verbs=IRREGULAR_VERBS)
 
 
 @router.get("/grammar/{topic_id}")
