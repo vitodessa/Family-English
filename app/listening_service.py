@@ -63,6 +63,30 @@ def _build_cloze(full: str, answers: list[str]) -> tuple[str, list[str]]:
     return cloze, used
 
 
+def pick_blanks(text: str, level: str, n=None) -> list[str]:
+    """Выбрать ключевые слова текста для пропусков (для готового транскрипта — напр. видео)."""
+    level = (level or "A1").upper()
+    if n is None:
+        n = LEVEL_BRIEF.get(level, LEVEL_BRIEF["A1"])[1]
+    system = ("You select key content words from an English text to blank out for a listening "
+              "gap-fill. Choose nouns/verbs/adjectives, never 'the/a/is'.")
+    user = (
+        f"From the text below, choose {n} KEY content words suitable to blank out for a CEFR "
+        f"{level} learner. Return a SINGLE raw JSON array of the chosen words (lowercase), "
+        "in order of appearance, nothing else:\n"
+        '["word1","word2",...]\n\nText:\n' + text[:3000]
+    )
+    raw = _call(system, user, max_tokens=300).strip()
+    if raw.startswith("```"):
+        raw = raw.strip("`")
+        raw = raw[raw.find("["):raw.rfind("]") + 1]
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+    return [str(w).strip() for w in data if str(w).strip()] if isinstance(data, list) else []
+
+
 def generate_listening(level: str, topic: str) -> dict[str, Any]:
     """Сгенерировать аудио-скрипт. Возвращает {title, full, cloze, answers}."""
     level = (level or "A1").upper()

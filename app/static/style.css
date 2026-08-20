@@ -218,6 +218,11 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   font-size:1.05rem;margin:8px 0 18px}
 .pre{white-space:pre-wrap;line-height:1.6;margin:0}
 
+/* video (встроенный ролик + пропуски) */
+.video-embed{position:relative;padding-bottom:56.25%;height:0;max-width:720px;margin:14px 0;
+  border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+
 /* listening (аудирование) */
 .listen-player{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:14px 0 18px}
 .cloze-text{font-size:1.2rem;line-height:2.4;background:var(--card);border:1px solid var(--line);

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Видео{% endblock %}
+{% block content %}
+<div class="read-head">
+  <a class="btn" href="/video">← К видео</a>
+  <span class="lvl-badge">{{ item.cefr_level }}</span>
+</div>
+<h1>{{ item.title }}</h1>
+
+<div class="video-embed">
+  <iframe src="https://www.youtube.com/embed/{{ youtube }}" title="{{ item.title }}"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen></iframe>
+</div>
+
+<p class="muted">Смотри и впиши пропущенные слова:</p>
+<form method="post" action="/video/{{ item.id }}/check" class="listen-form">
+  <div class="cloze-text">
+    {%- for seg in segments -%}
+      {{ seg }}
+      {%- if not loop.last -%}
+        {%- set i = loop.index0 -%}
+        {%- if choice_mode -%}
+          <select name="a{{ i }}" class="blank-sel" required>
+            {% for opt in options[i] %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+          </select>
+        {%- else -%}
+          <input name="a{{ i }}" class="blank-inp" autocomplete="off" autocapitalize="off" required>
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+  <button class="btn primary big-btn" type="submit" style="margin-top:18px">Проверить</button>
+</form>
+{% endblock %}

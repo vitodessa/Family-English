@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Видео — {{ app_title }}{% endblock %}
+{% block content %}
+<section class="dash-head">
+  <h1>Видео</h1>
+  <p class="muted">Смотри ролик и вписывай пропущенные слова из транскрипта.</p>
+</section>
+
+{% if items %}
+  <div class="read-list">
+    {% for it in items %}
+    <a class="read-card" href="/video/{{ it.id }}">
+      <span class="lvl-badge">{{ it.cefr_level }} · 🎬</span>
+      <span class="rc-title">{{ it.title }}</span>
+      <span class="rc-snippet">видео + пропущенные слова</span>
+    </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="muted" style="margin-top:16px">Пока нет видео — добавь первое ниже.</p>
+{% endif %}
+
+{% if can_add %}
+<div class="form-card" style="max-width:640px;margin-top:24px">
+  <h3>Добавить видео</h3>
+  <form method="post" action="/video/add">
+    <label>Ссылка YouTube
+      <input name="url" placeholder="https://www.youtube.com/watch?v=..." required></label>
+    <label>Название <input name="title" placeholder="напр. Dear Kitten"></label>
+    <label>Транскрипт (текст ролика по-английски)
+      <textarea name="transcript" rows="6" required
+        placeholder="Вставь субтитры / текст ролика — AI сам выберет пропуски под уровень"></textarea></label>
+    <button class="btn primary" type="submit">Добавить</button>
+  </form>
+</div>
+{% else %}
+  <p class="muted" style="margin-top:20px">Добавление видео недоступно — не задан <code>ANTHROPIC_API_KEY</code>.</p>
+{% endif %}
+{% endblock %}
