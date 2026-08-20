@@ -1,10 +1,17 @@
 """Наполнение каталога слов и подбор карточек ученику."""
 
-import random
-
 from sqlalchemy.orm import Session
 
-from app.config import ADMIN_NAME, ADMIN_PASSWORD, BASE_DIR, CEFR_ORDER, INITIAL_CARDS
+from app.config import (
+    ADMIN_NAME,
+    ADMIN_PASSWORD,
+    BASE_DIR,
+    CEFR_ORDER,
+    DECK_LOW_WATER,
+    START_CARDS,
+    TOPUP_CARDS,
+    WARMUP_CARDS,
+)
 from app.fsrs_service import new_card_state
 from app.models import Card, GrammarTopic, User, Word
 from app.security import hash_password
@@ -81,47 +88,85 @@ def ensure_admin(db: Session) -> None:
     db.commit()
 
 
-def generate_cards_for_user(db: Session, user: User, count: int = INITIAL_CARDS) -> int:
-    """Выдать ученику новые карточки его уровня (и ниже), которых у него ещё нет."""
-    # Уровни: свой и все, что проще — чтобы новичку было из чего набрать.
+def _level_index(level) -> int:
+    """Порядковый номер уровня CEFR (A1=0 … C2=5). Неизвестный уровень → 0."""
     try:
-        idx = CEFR_ORDER.index((user.cefr_level or "A1").upper())
+        return CEFR_ORDER.index((level or "A1").upper())
     except ValueError:
-        idx = 0
-    allowed_levels = CEFR_ORDER[: idx + 1]
+        return 0
 
-    have_fronts = {
-        c.front for c in db.query(Card).filter(Card.user_id == user.id).all()
-    }
 
-    pool = (
-        db.query(Word)
-        .filter(Word.cefr_level.in_(allowed_levels))
-        .all()
-    )
-    candidates = [w for w in pool if w.front not in have_fronts]
-    random.shuffle(candidates)
+def _ordered_words(db: Session) -> list[Word]:
+    """Весь каталог «простое → сложное»: по уровню CEFR, внутри уровня — в порядке файла (по id)."""
+    words = db.query(Word).all()
+    words.sort(key=lambda w: (_level_index(w.cefr_level), w.id))
+    return words
 
+
+def learning_sequence(db: Session, user: User) -> list[Word]:
+    """Индивидуальная последовательность подачи слов для ученика (простое → сложнее).
+
+    Новичок (A1) идёт с самого начала каталога. Для уровня выше — сперва немного
+    простых слов A1 «на разогрев», затем слова своего уровня и выше; промежуточные
+    уровни пропускаем (старт от уровня, а не «всё ниже вперемешку»).
+    """
+    pool = _ordered_words(db)
+    idx = _level_index(user.cefr_level)
+    if idx == 0:
+        seq = pool
+    else:
+        warmup = [w for w in pool if _level_index(w.cefr_level) == 0][:WARMUP_CARDS]
+        own_and_up = [w for w in pool if _level_index(w.cefr_level) >= idx]
+        seq = warmup + own_and_up
+
+    # дедуп по front, порядок сохраняем
+    seen, out = set(), []
+    for w in seq:
+        key = w.front.lower()
+        if key not in seen:
+            seen.add(key)
+            out.append(w)
+    return out
+
+
+def _add_cards_from_sequence(db: Session, user: User, sequence: list[Word], count: int) -> int:
+    """Добавить ученику до `count` следующих слов из последовательности, которых у него ещё нет."""
+    have = {c.front.lower() for c in db.query(Card).filter(Card.user_id == user.id).all()}
     created = 0
-    for word in candidates[:count]:
+    for w in sequence:
+        if created >= count:
+            break
+        if w.front.lower() in have:
+            continue
         fsrs_json, due = new_card_state()
-        db.add(
-            Card(
-                user_id=user.id,
-                word_id=word.id,
-                grammar_topic_id=word.grammar_topic_id,
-                front=word.front,
-                back=word.back,
-                fsrs_json=fsrs_json,
-                due=due,
-                state=0,
-                reps=0,
-            )
-        )
+        db.add(Card(
+            user_id=user.id, word_id=w.id, grammar_topic_id=w.grammar_topic_id,
+            front=w.front, back=w.back, fsrs_json=fsrs_json, due=due, state=0, reps=0,
+        ))
+        have.add(w.front.lower())
         created += 1
     if created:
         db.commit()
     return created
+
+
+def generate_cards_for_user(db: Session, user: User) -> int:
+    """Стартовая колода: первые простейшие слова от уровня ученика."""
+    return _add_cards_from_sequence(db, user, learning_sequence(db, user), START_CARDS)
+
+
+def top_up_deck(db: Session, user: User) -> int:
+    """Долив «по мере изучения»: если свежих карточек (New/Learning) мало — добавить следующую порцию.
+
+    Зовётся при заходе в кабинет/учёбу. Пока ученик разбирается со свежими словами,
+    ничего не добавляем; как только он их освоил (перешли в Review) — подаём следующие.
+    """
+    fresh = (db.query(Card)
+             .filter(Card.user_id == user.id, Card.state.in_([0, 1]))
+             .count())
+    if fresh >= DECK_LOW_WATER:
+        return 0
+    return _add_cards_from_sequence(db, user, learning_sequence(db, user), TOPUP_CARDS)
 
 
 def add_words_for_user(db: Session, user: User, raw_text: str) -> int:

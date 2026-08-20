@@ -10,6 +10,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.fsrs_service import apply_review
 from app.models import Card, LearningEvent
+from app.seed import top_up_deck
 from app.templating import render
 
 router = APIRouter()
@@ -29,6 +30,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=302)
+
+    top_up_deck(db, user)  # долив свежих слов по мере изучения
 
     today = datetime.utcnow().date()
     total_cards = db.query(Card).filter(Card.user_id == user.id).count()
@@ -72,6 +75,8 @@ def study(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=302)
+
+    top_up_deck(db, user)  # долив свежих слов по мере изучения
 
     card = _due_query(db, user.id).first()
     due_count = _due_query(db, user.id).count()

@@ -23,6 +23,12 @@ ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
 
 INITIAL_CARDS: int = int(os.getenv("INITIAL_CARDS", "20"))
 
+# --- Прогрессия карточек (v2): индивидуальный старт от уровня + долив по мере изучения ---
+START_CARDS: int = int(os.getenv("START_CARDS", "10"))        # выдать на старте
+WARMUP_CARDS: int = int(os.getenv("WARMUP_CARDS", "8"))       # простых A1 «на разогрев» для уровней выше A1
+DECK_LOW_WATER: int = int(os.getenv("DECK_LOW_WATER", "5"))   # порог «свежих» карточек, ниже которого доливаем
+TOPUP_CARDS: int = int(os.getenv("TOPUP_CARDS", "10"))        # сколько добавлять за один долив
+
 # Уровни CEFR в порядке возрастания — используется при подборе слов.
 CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"]
 

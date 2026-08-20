@@ -126,9 +126,13 @@ def _save_turn(db: DBSession, user: User, session_id: int, parsed: dict[str, Any
             source_module="speaking",
         ))
 
-    # Новые слова → каталог + карточки этому ученику (вот «единая память»)
-    have = {c.front.lower() for c in db.query(Card).filter(Card.user_id == user.id).all()}
+    # Новые слова → каталог + карточки этому ученику (вот «единая память»).
+    # На A1 (новичок) НЕ добавляем — чтобы разговорные фразы не пробивали «пол» сложности колоды.
     level = (user.cefr_level or "A1").upper()
+    if level == "A1":
+        db.commit()
+        return
+    have = {c.front.lower() for c in db.query(Card).filter(Card.user_id == user.id).all()}
     for v in parsed.get("new_vocab", []):
         front = str(v.get("word", "")).strip()
         back = str(v.get("translation", "")).strip()
