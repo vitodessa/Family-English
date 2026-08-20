@@ -3,7 +3,7 @@
 {% block content %}
 <section class="dash-head">
   <h1>Грамматика</h1>
-  <p class="muted">Теория под твой уровень + практика «впиши правильную форму».</p>
+  <p class="muted">CEFR-лесенка под твой уровень + теория и практика «впиши правильную форму».</p>
 </section>
 
 {% if not enabled %}
@@ -12,13 +12,31 @@
     <a class="btn" href="/dashboard">← В кабинет</a>
   </div>
 {% else %}
+
+  {% if suggested %}
+  <div class="fb-card">
+    <b>🎯 Стоит повторить</b> — здесь ты чаще всего ошибаешься:
+    <div class="chips">
+      {% for s in suggested %}
+      <a class="chip" href="/grammar/{{ s.topic.id }}">{{ s.topic.name }} <span class="chip-n">{{ s.count }}</span></a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% for level, topics in groups.items() %}
+  <h2 class="grm-level">
+    {{ level }}
+    {% if level == user_level %}<span class="lvl-badge" style="background:var(--primary);color:#fff">твой уровень</span>{% endif %}
+  </h2>
   <div class="read-list">
     {% for t in topics %}
     <a class="read-card" href="/grammar/{{ t.id }}">
       <span class="rc-title">{{ t.name }}</span>
-      {% if t.description %}<span class="rc-snippet">{{ t.description }}</span>{% endif %}
     </a>
     {% endfor %}
   </div>
+  {% endfor %}
+
 {% endif %}
 {% endblock %}

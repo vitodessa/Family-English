@@ -4,12 +4,15 @@
 «вырастает сам» из этих тегов.
 """
 
+from collections import OrderedDict
+
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import grammar_service
-from app.config import grammar_enabled
+from app.config import CEFR_ORDER, grammar_enabled
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import GrammarLesson, GrammarTopic, Mistake
@@ -41,8 +44,36 @@ def grammar_home(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=302)
-    topics = db.query(GrammarTopic).order_by(GrammarTopic.id).all()
-    return render(request, "grammar.html", db=db, topics=topics, enabled=grammar_enabled())
+
+    level = (user.cefr_level or "A1").upper()
+    idx = CEFR_ORDER.index(level) if level in CEFR_ORDER else 0
+    allowed = CEFR_ORDER[: idx + 1]
+
+    # Пункты своего уровня и ниже, по CEFR-лесенке (строки A1..C2 сортируются верно).
+    topics = (db.query(GrammarTopic)
+              .filter(GrammarTopic.cefr_level.in_(allowed))
+              .order_by(GrammarTopic.cefr_level, GrammarTopic.id).all())
+    groups = OrderedDict()
+    for t in topics:
+        groups.setdefault(t.cefr_level, []).append(t)
+
+    # Адаптив: темы, где ученик реально ошибается (из общей памяти).
+    counts = dict(
+        db.query(Mistake.grammar_topic_id, func.count(Mistake.id))
+        .filter(Mistake.user_id == user.id, Mistake.grammar_topic_id.isnot(None))
+        .group_by(Mistake.grammar_topic_id).all()
+    )
+    suggested = []
+    if counts:
+        by_id = {t.id: t for t in db.query(GrammarTopic)
+                 .filter(GrammarTopic.id.in_(counts.keys())).all()}
+        for tid, cnt in sorted(counts.items(), key=lambda kv: -kv[1]):
+            if tid in by_id:
+                suggested.append({"topic": by_id[tid], "count": cnt})
+        suggested = suggested[:4]
+
+    return render(request, "grammar.html", db=db, groups=groups, user_level=level,
+                  suggested=suggested, enabled=grammar_enabled())
 
 
 @router.get("/grammar/{topic_id}")

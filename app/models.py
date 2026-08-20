@@ -38,6 +38,7 @@ class GrammarTopic(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
+    cefr_level = Column(String, index=True)  # уровень пункта в CEFR-лесенке
     description = Column(Text)
 
 

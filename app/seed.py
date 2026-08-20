@@ -18,30 +18,60 @@ from app.security import hash_password
 
 VOCAB_DIR = BASE_DIR / "app" / "vocabulary"
 
-# Базовый набор грамматических тем для сквозного слоя. Расширяется по ходу.
-GRAMMAR_TOPICS = [
-    "Present Simple",
-    "Present Continuous",
-    "Past Simple",
-    "Future (will / going to)",
-    "Present Perfect",
-    "Articles (a / the)",
-    "Prepositions",
-    "Modal verbs",
-    "Conditionals",
-    "Phrasal verbs",
-]
+# CEFR-лесенка грамматики: пункты по уровням, по возрастанию сложности внутри уровня.
+GRAMMAR_SYLLABUS = {
+    "A1": [
+        "to be (am/is/are)", "Present Simple", "Артикли a/an/the",
+        "Множественное число", "Личные и притяжательные местоимения",
+        "there is / there are", "can (умение)", "Present Continuous",
+        "Предлоги места", "Вопросительные слова",
+    ],
+    "A2": [
+        "Past Simple", "Сравнительная и превосходная степень", "going to (планы)",
+        "Наречия частотности", "some / any, much / many", "have to / must",
+        "Предлоги времени", "Present Simple vs Continuous", "Past Continuous",
+    ],
+    "B1": [
+        "Present Perfect", "will vs going to", "Первый тип условных",
+        "Второй тип условных", "Пассивный залог (present/past)",
+        "Модальные: should / might / could", "Относительные придаточные (who/which/that)",
+        "used to", "Косвенная речь (базово)",
+    ],
+    "B2": [
+        "Present Perfect Continuous", "Past Perfect", "Третий тип условных",
+        "Смешанные условные", "Пассив (все времена)", "Косвенная речь (полностью)",
+        "Герундий vs инфинитив", "Модальные предположения (must / can't / might have)",
+        "Определительные и неопределительные придаточные",
+    ],
+    "C1": [
+        "Нарративные времена и перфект", "Инверсия (never have I…)",
+        "Клефт-конструкции (It was… that)", "wish / if only", "Причастные обороты",
+        "Модальные прошлого (should have, needn't have)", "Future Perfect / Continuous",
+        "Эмфаза и вынос в начало",
+    ],
+    "C2": [
+        "Сослагательное наклонение", "Продвинутая инверсия и эллипсис",
+        "Тонкая модальность и хеджирование", "Дискурсивные маркеры и связность",
+        "Каузатив (have / get sth done)", "Идиоматичная и стилистическая грамматика",
+    ],
+}
 
 
 def ensure_grammar_topics(db: Session) -> int:
-    """Завести базовые грамматические темы. Идемпотентно."""
+    """Завести/актуализировать CEFR-лесенку грамматики. Идемпотентно.
+
+    Порядок вставки = порядок в лесенке, поэтому id растут по возрастанию сложности.
+    """
     added = 0
-    for name in GRAMMAR_TOPICS:
-        if not db.query(GrammarTopic).filter(GrammarTopic.name == name).first():
-            db.add(GrammarTopic(name=name))
-            added += 1
-    if added:
-        db.commit()
+    for level, names in GRAMMAR_SYLLABUS.items():
+        for name in names:
+            topic = db.query(GrammarTopic).filter(GrammarTopic.name == name).first()
+            if not topic:
+                db.add(GrammarTopic(name=name, cefr_level=level))
+                added += 1
+            elif topic.cefr_level != level:
+                topic.cefr_level = level
+    db.commit()
     return added
 
 

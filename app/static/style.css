@@ -97,7 +97,14 @@ a.mod:hover{text-decoration:none;transform:translateY(-3px);border-color:#c9cbe0
   padding:3px 9px;border-radius:999px;background:#eef0f7;color:var(--muted)}
 .mod.accent .badge{background:rgba(255,255,255,.22);color:#fff}
 
-/* grammar (клоуз-практика) */
+/* grammar (CEFR-лесенка + клоуз-практика) */
+.grm-level{margin:26px 0 4px;display:flex;align-items:center;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:600;font-size:.92rem}
+.chip:hover{text-decoration:none;border-color:#c9cbe0}
+.chip-n{background:var(--again);color:#fff;border-radius:999px;font-size:.72rem;
+  font-weight:700;padding:1px 7px}
 .cloze-form{max-width:640px}
 .cloze-item{background:var(--card);border:1px solid var(--line);border-radius:14px;
   padding:16px 18px;margin:12px 0;box-shadow:var(--shadow)}
