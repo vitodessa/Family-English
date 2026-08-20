@@ -8,7 +8,7 @@ import json
 import random
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app import listening_service, speaking_service
@@ -107,7 +107,7 @@ def listening_item(item_id: int, request: Request, db: Session = Depends(get_db)
     slow = level in ("A1", "A2")  # для новичка медленнее по умолчанию
     return render(request, "listening_item.html", db=db, item=item,
                   segments=segments, n=len(answers), options=options,
-                  choice_mode=choice_mode, slow=slow)
+                  choice_mode=choice_mode, slow=slow, full=data.get("full", ""))
 
 
 @router.get("/listening/{item_id}/audio")
@@ -124,8 +124,11 @@ def listening_audio(item_id: int, request: Request, db: Session = Depends(get_db
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     path = AUDIO_DIR / f"listening_{item_id}.mp3"
     if not path.exists():
-        audio = speaking_service.text_to_speech(data.get("full", "")[:2000], 1.0)
-        path.write_bytes(audio)
+        try:
+            audio = speaking_service.text_to_speech(data.get("full", "")[:2000], 1.0)
+            path.write_bytes(audio)
+        except Exception:  # noqa: BLE001 — нет ElevenLabs/кредитов → клиент озвучит голосом браузера
+            return Response(status_code=503)
     return FileResponse(str(path), media_type="audio/mpeg")
 
 

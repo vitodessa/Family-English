@@ -7,7 +7,7 @@
 </div>
 <h1>{{ item.title }}</h1>
 
-<div class="listen-player">
+<div class="listen-player" data-full="{{ full }}">
   <audio id="audio" src="/listening/{{ item.id }}/audio" preload="auto"></audio>
   <button class="btn primary big-btn" id="play" type="button">▶️ Слушать</button>
   <label class="muted" style="display:flex;align-items:center;gap:8px;margin:0">Скорость
@@ -42,12 +42,32 @@
 <script>
 (function(){
   const audio=document.getElementById('audio'), play=document.getElementById('play'), speed=document.getElementById('speed');
-  function rate(){ audio.playbackRate=parseFloat(speed.value)||1; }
-  speed.onchange=rate; rate();
-  play.onclick=()=>{ rate();
-    if(audio.paused){ audio.play(); play.textContent='⏸ Пауза'; }
-    else { audio.pause(); play.textContent='▶️ Слушать'; } };
+  const full=document.querySelector('.listen-player').dataset.full||'';
+  let useBrowser=false;                 // фолбэк на голос браузера, если ElevenLabs недоступен
+  function curRate(){ return parseFloat(speed.value)||1; }
+  audio.playbackRate=curRate();
+  audio.onerror=()=>{ useBrowser=true; };
   audio.onended=()=>{ play.textContent='🔁 Ещё раз'; };
+
+  function speakBrowser(){
+    try{ const u=new SpeechSynthesisUtterance(full); u.lang='en-US'; u.rate=curRate();
+      u.onend=()=>play.textContent='🔁 Ещё раз';
+      speechSynthesis.cancel(); speechSynthesis.speak(u); play.textContent='⏸ Пауза'; }catch(e){}
+  }
+  speed.onchange=()=>{ audio.playbackRate=curRate(); };
+
+  play.onclick=()=>{
+    if(useBrowser){
+      if(speechSynthesis.speaking){ speechSynthesis.cancel(); play.textContent='▶️ Слушать'; }
+      else speakBrowser();
+      return;
+    }
+    audio.playbackRate=curRate();
+    if(audio.paused){
+      audio.play().then(()=>{ play.textContent='⏸ Пауза'; })
+        .catch(()=>{ useBrowser=true; speakBrowser(); });
+    } else { audio.pause(); play.textContent='▶️ Слушать'; }
+  };
 })();
 </script>
 {% endblock %}
