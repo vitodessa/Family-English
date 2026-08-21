@@ -13,6 +13,7 @@ import re
 import httpx
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.activity import touch_session
@@ -115,7 +116,7 @@ def video_home(request: Request, err: str = "", db: Session = Depends(get_db)):
     items = (db.query(ContentItem)
              .filter(ContentItem.kind == "video",
                      ContentItem.cefr_level.in_(_allowed_levels(user)))
-             .order_by(ContentItem.created_at.desc()).limit(30).all())
+             .order_by(func.random()).limit(48).all())   # свежая подборка каждый раз
     return render(request, "video.html", db=db, items=items, can_add=reading_enabled(),
                   error=_ERRORS.get(err, ""))
 
