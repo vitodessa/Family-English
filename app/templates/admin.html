@@ -4,7 +4,7 @@
 <div class="read-head" style="justify-content:flex-end"><a class="btn primary" href="/admin/analytics">📊 Аналитика обучения</a></div>
 <h1>Семья</h1>
 <table class="tbl">
-  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>🪙 Токены</th><th>Роль</th><th>Пароль</th><th>Отчёт</th></tr></thead>
+  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>🪙 Токены</th><th>Роль</th><th>Управление</th><th>Отчёт</th></tr></thead>
   <tbody>
     {% for r in rows %}
     <tr>
@@ -30,6 +30,13 @@
                  autocomplete="off" style="width:120px;padding:4px 6px;font-size:.85rem">
           <button class="btn ghost" type="submit" style="padding:4px 8px;font-size:.85rem">🔑</button>
         </form>
+        {% if not r.user.is_admin %}
+        <form method="post" action="/admin/delete-user/{{ r.user.id }}" style="margin:4px 0 0"
+              onsubmit="return confirm('Удалить {{ r.user.name }} со ВСЕМИ данными (карточки, прогресс, токены)? Отменить нельзя.')">
+          <button class="btn ghost" type="submit"
+                  style="padding:2px 8px;font-size:.8rem;color:#c0392b">🗑 Удалить</button>
+        </form>
+        {% endif %}
       </td>
       <td>
         <form method="post" action="/admin/send-report/{{ r.user.id }}" style="margin:0">

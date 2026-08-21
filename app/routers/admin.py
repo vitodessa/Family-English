@@ -8,7 +8,10 @@ from app.analytics import family_overview, user_analytics
 from app.config import CEFR_ORDER, reporting_enabled
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import Card, LearningEvent, User, Word
+from app.models import (
+    Card, ChecklistCheck, ContentItem, LearningEvent, Mistake, TokenLedger, User, Word,
+)
+from app.models import Session as ConvSession
 from app import token_service
 from app.report_service import build_daily_report, send_telegram
 from app.security import hash_password
@@ -86,6 +89,22 @@ def reset_password(user_id: int, request: Request,
     pw = (new_password or "").strip()
     if target and len(pw) >= 4:
         target.password_hash = hash_password(pw)
+        db.commit()
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/admin/delete-user/{user_id}")
+def delete_user(user_id: int, request: Request, db: Session = Depends(get_db)):
+    """Удалить ученика со всеми его данными. Админа и себя удалить нельзя."""
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/login", status_code=302)
+    target = db.query(User).filter(User.id == user_id).first()
+    if target and not target.is_admin and target.id != admin.id:
+        for M in (ChecklistCheck, TokenLedger, Mistake, ConvSession, LearningEvent, Card):
+            db.query(M).filter(M.user_id == target.id).delete()
+        db.query(ContentItem).filter(ContentItem.created_by == target.id).delete()
+        db.delete(target)
         db.commit()
     return RedirectResponse("/admin", status_code=303)
 
