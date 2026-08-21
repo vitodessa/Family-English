@@ -31,6 +31,8 @@
       {% endfor %}
     </div>
 
+    <button type="button" id="dontknow" class="btn ghost dk-btn">Не знаю 🤷</button>
+
     <div class="quiz-foot">
       <form method="post" action="/study/answer" id="next-form" hidden>
         <input type="hidden" name="card_id" value="{{ card.id }}">
@@ -51,6 +53,7 @@
   const audioBtn = document.getElementById('audio');
   const nextForm = document.getElementById('next-form');
   const chosenInput = document.getElementById('chosen');
+  const dkBtn = document.getElementById('dontknow');
   let answered = false;
 
   function speak(){
@@ -78,14 +81,30 @@
     if(!isOk) btn.classList.add('wrong');
     btn.querySelector('.mark').textContent = isOk ? '✓' : '✗';
     chosenInput.value = val;
+    dkBtn.hidden = true;
     if(ru2en) audioBtn.hidden = false;   // теперь можно услышать правильное слово
     nextForm.hidden = false;
     speak();                              // всегда озвучиваем английское слово после ответа
   });
 
+  // «Не знаю» — честно засчитываем как ошибку (Снова), показываем правильный ответ.
+  // Пустой chosen на сервере трактуется как неверный ответ → рейтинг «Снова».
+  dkBtn.onclick = () => {
+    if(answered) return;
+    answered = true;
+    opts.forEach(b => { b.disabled = true;
+      if(norm(b.dataset.val) === norm(correct)) b.classList.add('correct'); });
+    chosenInput.value = '';
+    dkBtn.hidden = true;
+    if(ru2en) audioBtn.hidden = false;
+    nextForm.hidden = false;
+    speak();
+  };
+
   // 1–3 с клавиатуры выбирают вариант, Enter — «Далі»
   document.addEventListener('keydown', e => {
     if(!answered && e.key >= '1' && e.key <= String(opts.length)){ opts[+e.key-1].click(); }
+    else if(!answered && e.key === '0'){ dkBtn.click(); }   // 0 — «Не знаю»
     else if(answered && e.key === 'Enter'){ nextForm.querySelector('button').click(); }
   });
 })();

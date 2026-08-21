@@ -356,6 +356,7 @@ a.mod:hover .ico{transform:scale(1.15) rotate(-4deg)}
 /* study quiz (активное припоминание) */
 .quiz{max-width:600px;margin:10px auto}
 .q-emoji{font-size:4.4rem;line-height:1;text-align:center;margin:8px 0 2px}
+.dk-btn{display:block;margin:12px auto 0;opacity:.9}
 .q-pic{text-align:center;margin:6px 0 2px}
 .q-pic img{width:132px;height:132px;object-fit:contain;border-radius:16px;
   background:#fff;padding:6px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
