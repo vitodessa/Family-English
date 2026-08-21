@@ -11,10 +11,12 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session as DBSession
 
 from app import speaking_service, writing_service
+from app.activity import touch_session
 from app.config import writing_enabled
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Session as ConvSession
+from app.norms import daily_norms
 from app.templating import render
 
 router = APIRouter()
@@ -63,5 +65,13 @@ def writing_review(
     conv.ended_at = datetime.utcnow()
     db.commit()
 
+    # Зачёт блока в уроке — по норме длины (по уровню + рост со временем)
+    words = len(text.split())
+    need = daily_norms(db, user)["write_words"]
+    counted = words >= need
+    if counted:
+        touch_session(db, user.id, "writing_done", f"Письмо: {words} слов")
+
     return render(request, "writing_result.html", db=db,
-                  task=task, original=text, result=parsed)
+                  task=task, original=text, result=parsed,
+                  words=words, need=need, counted=counted)

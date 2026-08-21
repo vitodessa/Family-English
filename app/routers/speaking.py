@@ -8,10 +8,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session as DBSession
 
 from app import speaking_service
+from app.activity import touch_session
 from app.config import speaking_enabled
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Mistake, Session as ConvSession
+from app.norms import daily_norms
 from app.templating import render
 
 router = APIRouter()
@@ -124,6 +126,14 @@ def speaking_turn(data: TurnIn, request: Request, db: DBSession = Depends(get_db
                                             data.topic, data.level, data.mode)
     except Exception as e:  # noqa: BLE001
         return JSONResponse({"error": f"Ошибка ИИ: {e}"}, status_code=502)
+
+    # Зачёт блока «Разговор» в уроке — по числу реальных реплик ученика (норма растёт)
+    turns = sum(1 for m in (data.history or [])
+                if m.get("role") == "user"
+                and m.get("content", "").strip() != "Let's begin the lesson.")
+    need = daily_norms(db, user)["speak_turns"]
+    if turns >= need:
+        touch_session(db, user.id, "speaking_done", f"Разговор: {turns} реплик")
     return result
 
 

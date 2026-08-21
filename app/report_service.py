@@ -20,6 +20,7 @@ from app.config import (
 )
 from app.models import ContentItem, LearningEvent, Mistake, User
 from app.models import Session as ConvSession
+from app.norms import daily_norms
 
 _CAT_RU = {
     "grammar": "грамматика", "tense": "времена", "articles": "артикли",
@@ -75,11 +76,11 @@ def required_modules(db, user) -> set:
 
     Аудирование/Разговор — если модуль включён; Видео — если для уровня есть ролик.
     """
-    mods = {"grammar", "reading", "writing", "lesson_test"}
+    mods = {"grammar", "reading", "writing_done", "lesson_test"}
     if listening_enabled():
         mods.add("listening")
     if speaking_enabled():
-        mods.add("speaking")
+        mods.add("speaking_done")
     if _has_video(db, user):
         mods.add("video")
     return mods
@@ -92,7 +93,8 @@ def lesson_complete(db, user_id: int) -> bool:
         return False
     mods = _modules_today(db, user_id)
     reviews, _ = _reviews_today(db, user_id)
-    return reviews >= LESSON_CARDS and required_modules(db, user) <= mods
+    return (reviews >= daily_norms(db, user)["cards"]
+            and required_modules(db, user) <= mods)
 
 
 def build_daily_report(db, user) -> str:
@@ -113,18 +115,24 @@ def build_daily_report(db, user) -> str:
     def mark(cond):
         return "✅" if cond else "⬜️"
 
+    n = daily_norms(db, user)
     lines = [
         f"📚 <b>Урок дня — {user.name}</b> ({datetime.utcnow():%d.%m})",
         "",
-        f"{mark(reviews >= LESSON_CARDS)} Карточки — повторений: {reviews}"
+        f"{mark(reviews >= n['cards'])} Карточки — повторений: {reviews}/{n['cards']}"
         + (f" (верно {pct}%)" if reviews else ""),
         f"{mark('grammar' in mods)} Грамматика",
         f"{mark('reading' in mods)} Чтение",
-        f"{mark('writing' in mods)} Письмо",
-        f"{mark('speaking' in mods)} Разговор",
-        f"{mark(test is not None)} Финальный тест"
-        + (f" — {test.summary}" if test and test.summary else ""),
     ]
+    if listening_enabled():
+        lines.append(f"{mark('listening' in mods)} Аудирование")
+    lines.append(f"{mark('writing_done' in mods)} Письмо")
+    if speaking_enabled():
+        lines.append(f"{mark('speaking_done' in mods)} Разговор")
+    if _has_video(db, user):
+        lines.append(f"{mark('video' in mods)} Видео")
+    lines.append(f"{mark(test is not None)} Финальный тест"
+                 + (f" — {test.summary}" if test and test.summary else ""))
     if mistakes:
         lines += ["", f"✍️ Ошибок сегодня: {len(mistakes)}" + (f" · {top}" if top else "")]
 

@@ -18,6 +18,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.irregular_verbs import IRREGULAR_VERBS
 from app.models import GrammarLesson, GrammarTopic, Mistake
+from app.norms import daily_norms
 from app.templating import render
 
 router = APIRouter()
@@ -115,7 +116,8 @@ def grammar_practice(topic_id: int, request: Request, db: Session = Depends(get_
     topic = db.query(GrammarTopic).filter(GrammarTopic.id == topic_id).first()
     if not topic or not grammar_enabled():
         return RedirectResponse(f"/grammar/{topic_id}", status_code=302)
-    items = grammar_service.generate_cloze(topic.name, user.cefr_level or "A1")
+    n = daily_norms(db, user)["grammar"]
+    items = grammar_service.generate_cloze(topic.name, user.cefr_level or "A1", n=n)
     return render(request, "grammar_practice.html", db=db, topic=topic, items=items)
 
 

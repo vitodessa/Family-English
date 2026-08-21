@@ -6,6 +6,15 @@
   <p class="muted">Задание: {{ task }}</p>
 </section>
 
+{% if counted is defined %}
+  {% if counted %}
+    <div class="ok" style="display:inline-block">✅ Зачтено в урок — {{ words }} слов (норма {{ need }})</div>
+  {% else %}
+    <div class="fb-card">✍️ Написано {{ words }} слов из {{ need }} — допиши ещё {{ need - words }}, чтобы блок засчитался в урок.
+      <a class="btn" href="/writing">Дописать</a></div>
+  {% endif %}
+{% endif %}
+
 {% if result.feedback %}
   <div class="fb-card">💬 {{ result.feedback }}</div>
 {% endif %}

@@ -18,6 +18,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models import Card, ContentItem, LearningEvent
 from app.models import Session as ConvSession
+from app.norms import daily_norms
 from app.templating import render
 
 router = APIRouter()
@@ -56,12 +57,13 @@ def _build_steps(db: Session, user) -> list[dict]:
     reviews_today = (db.query(LearningEvent)
                      .filter(LearningEvent.user_id == user.id,
                              LearningEvent.reviewed_at >= _day_start()).count())
+    n = daily_norms(db, user)   # нормы по уровню + рост со временем
     steps = [
         {"key": "cards", "icon": "🗂", "name": "Карточки",
-         "desc": f"Повтори {LESSON_CARDS} слов", "url": "/study",
-         "done": reviews_today >= LESSON_CARDS},
+         "desc": f"Повтори {n['cards']} слов", "url": "/study",
+         "done": reviews_today >= n["cards"]},
         {"key": "grammar", "icon": "📚", "name": "Грамматика",
-         "desc": "Тема: теория + практика", "url": "/grammar",
+         "desc": f"Теория + {n['grammar']} упражнений", "url": "/grammar",
          "done": _did_today(db, user.id, "grammar")},
         {"key": "reading", "icon": "📖", "name": "Чтение",
          "desc": "Один короткий текст", "url": "/reading",
@@ -72,18 +74,18 @@ def _build_steps(db: Session, user) -> list[dict]:
                       "desc": "Послушать и вставить слова", "url": "/listening",
                       "done": _did_today(db, user.id, "listening")})
     steps.append({"key": "writing", "icon": "✍️", "name": "Письмо",
-                  "desc": "Короткое задание", "url": "/writing",
-                  "done": _did_today(db, user.id, "writing")})
+                  "desc": f"Написать не меньше {n['write_words']} слов", "url": "/writing",
+                  "done": _did_today(db, user.id, "writing_done")})
     if speaking_enabled():
         steps.append({"key": "speaking", "icon": "🎤", "name": "Разговор",
-                      "desc": "Короткий диалог", "url": "/speaking",
-                      "done": _did_today(db, user.id, "speaking")})
+                      "desc": f"Хотя бы {n['speak_turns']} реплик", "url": "/speaking",
+                      "done": _did_today(db, user.id, "speaking_done")})
     if _has_video(db, user):   # видео — только если для уровня есть ролик
         steps.append({"key": "video", "icon": "🎬", "name": "Видео",
                       "desc": "Ролик + пропущенные слова", "url": "/video",
                       "done": _did_today(db, user.id, "video")})
     steps.append({"key": "test", "icon": "✅", "name": "Финальный тест",
-                  "desc": f"{TEST_QUESTIONS} вопросов по словам", "url": "/lesson/test",
+                  "desc": f"{n['test']} вопросов по словам", "url": "/lesson/test",
                   "done": _did_today(db, user.id, "lesson_test")})
     return steps
 
@@ -113,7 +115,8 @@ def _test_questions(db: Session, user) -> list[dict]:
     random.shuffle(cards)
     backs = [c.back for c in cards]
     questions = []
-    for card in cards[:TEST_QUESTIONS]:
+    n_q = daily_norms(db, user)["test"]
+    for card in cards[:n_q]:
         correct = card.back
         pool = [b for b in backs if b.strip().lower() != correct.strip().lower()]
         random.shuffle(pool)

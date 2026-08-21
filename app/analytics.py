@@ -119,7 +119,9 @@ def user_analytics(db: Session, user: User) -> dict:
     # берём их из дней с повторениями, чтобы главная активность была видна.
     mod_rows = (db.query(ActSession.module, func.count(ActSession.id))
                 .filter(ActSession.user_id == uid).group_by(ActSession.module).all())
-    modules = [{"label": module_label(m), "count": n} for m, n in mod_rows]
+    # *_done — служебные отметки «зачёт блока», не показываем как активность
+    modules = [{"label": module_label(m), "count": n}
+               for m, n in mod_rows if not (m or "").endswith("_done")]
     if active_days:
         modules.append({"label": "Карточки", "count": active_days})
     modules.sort(key=lambda x: -x["count"])
