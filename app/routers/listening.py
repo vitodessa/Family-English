@@ -41,7 +41,9 @@ def listening_home(request: Request, db: Session = Depends(get_db)):
              .filter(ContentItem.kind == "listening",
                      ContentItem.cefr_level.in_(_allowed_levels(user)))
              .order_by(ContentItem.created_at.desc()).limit(30).all())
-    return render(request, "listening.html", db=db, items=items, enabled=listening_enabled())
+    return render(request, "listening.html", db=db, items=items,
+                  enabled=listening_enabled(),
+                  err=request.query_params.get("err"))
 
 
 @router.post("/listening/generate")
@@ -56,10 +58,10 @@ def listening_generate(request: Request, topic: str = Form(""),
     level = (user.cefr_level or "A1").upper()
     try:
         data = listening_service.generate_listening(level, topic)
-    except Exception:  # noqa: BLE001
-        return RedirectResponse("/listening", status_code=302)
+    except Exception:  # noqa: BLE001 — ИИ недоступен/таймаут → показать ошибку, не молчать
+        return RedirectResponse("/listening?err=gen", status_code=302)
     if not data.get("full") or not data.get("answers"):
-        return RedirectResponse("/listening", status_code=302)
+        return RedirectResponse("/listening?err=empty", status_code=302)
 
     item = ContentItem(title=data["title"], body=json.dumps(data, ensure_ascii=False),
                        kind="listening", cefr_level=level, topic=topic.strip(),

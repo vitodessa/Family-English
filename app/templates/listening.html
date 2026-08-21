@@ -13,13 +13,22 @@
     <a class="btn" href="/dashboard">← В кабинет</a>
   </div>
 {% else %}
-  <form class="gen-bar" method="post" action="/listening/generate">
+  {% if err == "gen" %}
+    <p class="warn">Не получилось сгенерировать (ИИ был занят или долго отвечал). Попробуй ещё раз или другую тему.</p>
+  {% elif err == "empty" %}
+    <p class="warn">Текст получился без пропусков — попробуй ещё раз или уточни тему.</p>
+  {% endif %}
+
+  <form class="gen-bar" method="post" action="/listening/generate"
+        onsubmit="var b=this.querySelector('button'); b.disabled=true;
+                  b.textContent='✨ Генерирую… пара секунд'; this.querySelector('input').readOnly=true;">
     <input type="text" name="topic" maxlength="120"
            placeholder="Тема (напр. «мой день», «погода», «путешествие»)">
     <button class="btn primary" type="submit">✨ Сгенерировать</button>
   </form>
   <p class="muted" style="font-size:.85rem">
-    Под твой уровень ({{ current_user.cefr_level }}): короткий текст + озвучка. Пара секунд.
+    Впиши любую тему по-русски или по-английски и нажми «Сгенерировать» — под твой уровень
+    ({{ current_user.cefr_level }}) будет короткий текст с озвучкой. Или открой готовый ниже ↓
   </p>
 
   {% if items %}
