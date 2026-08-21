@@ -19,6 +19,7 @@
   <div class="spell-cells" id="cells"></div>
   <div class="spell-pool" id="pool"></div>
   <p class="muted center" id="hint" style="min-height:1.2em"></p>
+  <button type="button" id="dontknow" class="btn ghost dk-btn">Не знаю 🤷</button>
 </div>
 
 <div id="end" class="chal-end" hidden>
@@ -39,6 +40,16 @@
   const clueEl=document.getElementById('clue'), cellsEl=document.getElementById('cells');
   const poolEl=document.getElementById('pool'), hintEl=document.getElementById('hint');
   let i=0, solved=0, placed=[];
+  const dkBtn=document.getElementById('dontknow');
+  dkBtn.onclick=()=>{
+    const w=rounds[i].word;
+    dkBtn.disabled=true;
+    poolEl.querySelectorAll('button').forEach(b=>b.disabled=true);
+    cellsEl.innerHTML='';
+    for(const ch of w){ const c=document.createElement('div'); c.className='cell filled'; c.textContent=ch; cellsEl.appendChild(c); }
+    hintEl.textContent='Правильно: '+w;
+    setTimeout(()=>{ i++; if(i>=rounds.length) finish(); else renderRound(); }, 1400);
+  };
 
   function shuffle(a){ for(let x=a.length-1;x>0;x--){const j=Math.floor(Math.random()*(x+1));[a[x],a[j]]=[a[j],a[x]];} return a; }
 
@@ -53,7 +64,7 @@
     }
   }
   function renderRound(){
-    placed=[]; hintEl.textContent='';
+    placed=[]; hintEl.textContent=''; dkBtn.disabled=false;
     const r=rounds[i];
     progressEl.textContent=(i+1)+' / '+rounds.length;
     const vis = r.pic ? `<img class="game-pic" src="/pic/${r.pic}" alt="">`
