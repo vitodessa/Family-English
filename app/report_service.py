@@ -184,6 +184,34 @@ def run_weekly(db) -> bool:
     return send_telegram(build_weekly_digest(db))
 
 
+def build_morning_reminder(db) -> str:
+    """Утренний пинок: кто ещё не сделал урок сегодня + серии (чтоб было что терять)."""
+    from app.analytics import user_analytics
+    lines = ["🌅 <b>Пора на урок английского!</b>", ""]
+    pending, streaks = [], []
+    for u in _students(db):
+        if not lesson_complete(db, u.id):
+            pending.append(u.name)
+        a = user_analytics(db, u)
+        if a["streak"] > 0:
+            streaks.append("%s %d" % (u.name, a["streak"]))
+    if pending:
+        lines.append("Сегодня ещё не занимались: <b>" + ", ".join(pending) + "</b>")
+        lines.append("Один «Начать урок» — и готово.")
+    else:
+        lines.append("Все уже позанимались сегодня — красота 🎉")
+    if streaks:
+        lines += ["", "🔥 Серии: " + " · ".join(streaks) + " — не растеряйте!"]
+    return "\n".join(lines)
+
+
+def run_morning(db) -> bool:
+    """Плановое: утреннее напоминание."""
+    if not reporting_enabled():
+        return False
+    return send_telegram(build_morning_reminder(db))
+
+
 def send_telegram(text: str) -> bool:
     if not reporting_enabled():
         return False
