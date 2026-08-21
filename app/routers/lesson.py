@@ -13,10 +13,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.activity import touch_session
-from app.config import LESSON_CARDS
+from app.config import CEFR_ORDER, LESSON_CARDS, listening_enabled, speaking_enabled
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import Card, LearningEvent
+from app.models import Card, ContentItem, LearningEvent
 from app.models import Session as ConvSession
 from app.templating import render
 
@@ -36,11 +36,27 @@ def _did_today(db: Session, user_id: int, module: str) -> bool:
                     ConvSession.started_at >= _day_start()).first()) is not None
 
 
+def _allowed_levels(user) -> list:
+    """Уровень ученика и ниже — для подбора контента."""
+    try:
+        idx = CEFR_ORDER.index((user.cefr_level or "A1").upper())
+    except ValueError:
+        idx = 0
+    return CEFR_ORDER[:idx + 1]
+
+
+def _has_video(db: Session, user) -> bool:
+    """Есть ли добавленный ролик для уровня (иначе блок «Видео» нечем занять)."""
+    return (db.query(ContentItem)
+            .filter(ContentItem.kind == "video",
+                    ContentItem.cefr_level.in_(_allowed_levels(user))).first()) is not None
+
+
 def _build_steps(db: Session, user) -> list[dict]:
     reviews_today = (db.query(LearningEvent)
                      .filter(LearningEvent.user_id == user.id,
                              LearningEvent.reviewed_at >= _day_start()).count())
-    return [
+    steps = [
         {"key": "cards", "icon": "🗂", "name": "Карточки",
          "desc": f"Повтори {LESSON_CARDS} слов", "url": "/study",
          "done": reviews_today >= LESSON_CARDS},
@@ -50,16 +66,26 @@ def _build_steps(db: Session, user) -> list[dict]:
         {"key": "reading", "icon": "📖", "name": "Чтение",
          "desc": "Один короткий текст", "url": "/reading",
          "done": _did_today(db, user.id, "reading")},
-        {"key": "writing", "icon": "✍️", "name": "Письмо",
-         "desc": "Короткое задание", "url": "/writing",
-         "done": _did_today(db, user.id, "writing")},
-        {"key": "speaking", "icon": "🎤", "name": "Разговор",
-         "desc": "Короткий диалог (по желанию)", "url": "/speaking",
-         "done": _did_today(db, user.id, "speaking"), "optional": True},
-        {"key": "test", "icon": "✅", "name": "Финальный тест",
-         "desc": f"{TEST_QUESTIONS} вопросов по словам", "url": "/lesson/test",
-         "done": _did_today(db, user.id, "lesson_test")},
     ]
+    if listening_enabled():
+        steps.append({"key": "listening", "icon": "🎧", "name": "Аудирование",
+                      "desc": "Послушать и вставить слова", "url": "/listening",
+                      "done": _did_today(db, user.id, "listening")})
+    steps.append({"key": "writing", "icon": "✍️", "name": "Письмо",
+                  "desc": "Короткое задание", "url": "/writing",
+                  "done": _did_today(db, user.id, "writing")})
+    if speaking_enabled():
+        steps.append({"key": "speaking", "icon": "🎤", "name": "Разговор",
+                      "desc": "Короткий диалог", "url": "/speaking",
+                      "done": _did_today(db, user.id, "speaking")})
+    if _has_video(db, user):   # видео — только если для уровня есть ролик
+        steps.append({"key": "video", "icon": "🎬", "name": "Видео",
+                      "desc": "Ролик + пропущенные слова", "url": "/video",
+                      "done": _did_today(db, user.id, "video")})
+    steps.append({"key": "test", "icon": "✅", "name": "Финальный тест",
+                  "desc": f"{TEST_QUESTIONS} вопросов по словам", "url": "/lesson/test",
+                  "done": _did_today(db, user.id, "lesson_test")})
+    return steps
 
 
 @router.get("/lesson")

@@ -10,12 +10,15 @@ from datetime import datetime, timedelta
 import httpx
 
 from app.config import (
+    CEFR_ORDER,
     LESSON_CARDS,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID,
+    listening_enabled,
     reporting_enabled,
+    speaking_enabled,
 )
-from app.models import LearningEvent, Mistake, User
+from app.models import ContentItem, LearningEvent, Mistake, User
 from app.models import Session as ConvSession
 
 _CAT_RU = {
@@ -53,12 +56,43 @@ def _students(db):
     return db.query(User).filter(User.is_admin == False).order_by(User.id).all()  # noqa: E712
 
 
+def _allowed_levels(user):
+    try:
+        idx = CEFR_ORDER.index((user.cefr_level or "A1").upper())
+    except ValueError:
+        idx = 0
+    return CEFR_ORDER[:idx + 1]
+
+
+def _has_video(db, user) -> bool:
+    return (db.query(ContentItem)
+            .filter(ContentItem.kind == "video",
+                    ContentItem.cefr_level.in_(_allowed_levels(user))).first()) is not None
+
+
+def required_modules(db, user) -> set:
+    """Обязательные блоки урока дня (те же, что показывает /lesson).
+
+    Аудирование/Разговор — если модуль включён; Видео — если для уровня есть ролик.
+    """
+    mods = {"grammar", "reading", "writing", "lesson_test"}
+    if listening_enabled():
+        mods.add("listening")
+    if speaking_enabled():
+        mods.add("speaking")
+    if _has_video(db, user):
+        mods.add("video")
+    return mods
+
+
 def lesson_complete(db, user_id: int) -> bool:
-    """Пройдены ли все обязательные блоки урока (кроме разговора) + тест."""
+    """Пройдены ли ВСЕ обязательные блоки урока (включая аудирование и разговор) + тест."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return False
     mods = _modules_today(db, user_id)
     reviews, _ = _reviews_today(db, user_id)
-    return (reviews >= LESSON_CARDS
-            and {"grammar", "reading", "writing", "lesson_test"} <= mods)
+    return reviews >= LESSON_CARDS and required_modules(db, user) <= mods
 
 
 def build_daily_report(db, user) -> str:
