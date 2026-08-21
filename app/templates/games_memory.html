@@ -26,7 +26,7 @@
   const movesEl=document.getElementById('moves'), foundEl=document.getElementById('found');
   let deck=[], first=null, lock=false, found=0, moves=0;
   const shuffle=a=>{ for(let x=a.length-1;x>0;x--){const j=Math.floor(Math.random()*(x+1));[a[x],a[j]]=[a[j],a[x]];} return a; };
-  pairs.forEach(p=>{ deck.push({id:p.id,text:p.en}); deck.push({id:p.id,text:p.ru}); });
+  pairs.forEach(p=>{ deck.push({id:p.id,text:p.en,pic:p.pic}); deck.push({id:p.id,text:p.ru}); });
   shuffle(deck);
 
   deck.forEach(card=>{
@@ -38,7 +38,9 @@
 
   function flip(el,card){
     if(lock || el.classList.contains('flipped') || el.classList.contains('matched')) return;
-    el.classList.add('flipped'); el.textContent=card.text;
+    el.classList.add('flipped');
+    if(card.pic){ el.innerHTML='<img class="game-pic-sm" src="/pic/'+card.pic+'" alt=""><span>'+card.text+'</span>'; }
+    else { el.textContent=card.text; }
     if(!first){ first={el,card}; return; }
     moves++; movesEl.textContent='Ходов: '+moves; lock=true;
     if(first.card.id===card.id && first.el!==el){

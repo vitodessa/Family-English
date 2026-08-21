@@ -18,6 +18,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.emoji_map import emoji_for
 from app.models import Card
+from app.pictograms import has_pictogram
 from app.templating import render
 from app.token_service import award_game
 
@@ -38,6 +39,19 @@ class DoneIn(BaseModel):
     total: int = 0
 
 
+def _img(word):
+    """Картинка слова для игр: пиктограмма ARASAAC (по слову) или эмодзи-запаска."""
+    w = (word or "").strip()
+    if has_pictogram(w):
+        return {"pic": w.lower(), "emoji": ""}
+    return {"pic": "", "emoji": emoji_for(w)}
+
+
+def _has_img(word):
+    """Есть ли у слова хоть какая-то картинка (пиктограмма или эмодзи)."""
+    return has_pictogram(word) or bool(emoji_for(word))
+
+
 def _mcq_rounds(cards, prompt_pool, n, front_prompt):
     """Собрать MCQ-раунды. front_prompt=True → в вопросе английское слово (для аудио),
     иначе — эмодзи (для картинок). prompt_pool — карточки-кандидаты в вопрос."""
@@ -50,7 +64,10 @@ def _mcq_rounds(cards, prompt_pool, n, front_prompt):
         options = [c.front] + distr[:2]
         random.shuffle(options)
         r = {"correct": c.front, "options": options}
-        r["word" if front_prompt else "emoji"] = c.front if front_prompt else emoji_for(c.front)
+        if front_prompt:
+            r["word"] = c.front           # аудио: в вопросе английское слово
+        else:
+            r.update(_img(c.front))       # картинки: пиктограмма/эмодзи
         rounds.append(r)
     return rounds
 
@@ -68,8 +85,7 @@ def _spell_rounds(db: Session, user, n: int) -> list[dict]:
     # только одиночные латинские слова разумной длины
     good = [c for c in cards if c.front.isalpha() and 2 <= len(c.front) <= 10]
     random.shuffle(good)
-    return [{"word": c.front, "emoji": emoji_for(c.front), "clue": c.back}
-            for c in good[:n]]
+    return [dict(word=c.front, clue=c.back, **_img(c.front)) for c in good[:n]]
 
 
 @router.get("/games/spell")
@@ -98,8 +114,8 @@ def games_picture(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse("/login", status_code=302)
     cards = db.query(Card).filter(Card.user_id == user.id).all()
-    with_emoji = [c for c in cards if emoji_for(c.front)]  # только слова с картинкой
-    rounds = _mcq_rounds(cards, with_emoji, PICTURE_ROUNDS, front_prompt=False)
+    with_img = [c for c in cards if _has_img(c.front)]  # слова с картинкой (пиктограмма/эмодзи)
+    rounds = _mcq_rounds(cards, with_img, PICTURE_ROUNDS, front_prompt=False)
     return render(request, "games_picture.html", db=db,
                   rounds_json=json.dumps(rounds, ensure_ascii=False), has_rounds=bool(rounds))
 
@@ -123,7 +139,8 @@ def games_pairs(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/login", status_code=302)
     cards = db.query(Card).filter(Card.user_id == user.id).all()
     random.shuffle(cards)
-    pairs = [{"id": i, "en": c.front, "ru": c.back} for i, c in enumerate(cards[:PAIRS_COUNT])]
+    pairs = [dict(id=i, en=c.front, ru=c.back, **_img(c.front))
+             for i, c in enumerate(cards[:PAIRS_COUNT])]
     return render(request, "games_pairs.html", db=db,
                   pairs_json=json.dumps(pairs, ensure_ascii=False), has_pairs=len(pairs) >= 3)
 
@@ -216,7 +233,8 @@ def games_memory(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/login", status_code=302)
     cards = db.query(Card).filter(Card.user_id == user.id).all()
     random.shuffle(cards)
-    pairs = [{"id": i, "en": c.front, "ru": c.back} for i, c in enumerate(cards[:MEMORY_PAIRS])]
+    pairs = [dict(id=i, en=c.front, ru=c.back, **_img(c.front))
+             for i, c in enumerate(cards[:MEMORY_PAIRS])]
     return render(request, "games_memory.html", db=db,
                   pairs_json=json.dumps(pairs, ensure_ascii=False), has_pairs=len(pairs) >= 3)
 

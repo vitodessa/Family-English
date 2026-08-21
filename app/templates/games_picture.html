@@ -34,7 +34,8 @@
   function render(){
     locked=false; const r=rounds[i];
     progEl.textContent=(i+1)+' / '+rounds.length; scoreEl.textContent=score;
-    emojiEl.textContent=r.emoji;
+    if(r.pic){ emojiEl.innerHTML='<img class="game-pic" src="/pic/'+r.pic+'" alt="">'; }
+    else { emojiEl.textContent=r.emoji; }
     optsEl.innerHTML='';
     r.options.forEach(opt=>{
       const b=document.createElement('button'); b.type='button'; b.className='opt';

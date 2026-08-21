@@ -32,12 +32,15 @@
   let selected=null, matched=0;
   const shuffle=a=>{ for(let x=a.length-1;x>0;x--){const j=Math.floor(Math.random()*(x+1));[a[x],a[j]]=[a[j],a[x]];} return a; };
 
-  function makeCard(id, text, side){
+  function makeCard(id, text, side, pic){
     const d=document.createElement('div'); d.className='pair-card';
-    d.dataset.id=id; d.dataset.side=side; d.textContent=text;
+    d.dataset.id=id; d.dataset.side=side;
+    if(pic){ d.classList.add('has-pic');
+      d.innerHTML='<img class="game-pic-sm" src="/pic/'+pic+'" alt=""><span>'+text+'</span>'; }
+    else { d.textContent=text; }
     d.onclick=()=>onTap(d); return d;
   }
-  shuffle(pairs.slice()).forEach(p=>colEn.appendChild(makeCard(p.id,p.en,'en')));
+  shuffle(pairs.slice()).forEach(p=>colEn.appendChild(makeCard(p.id,p.en,'en',p.pic)));
   shuffle(pairs.slice()).forEach(p=>colRu.appendChild(makeCard(p.id,p.ru,'ru')));
 
   function clearSel(){ if(selected){ selected.classList.remove('sel'); selected=null; } }

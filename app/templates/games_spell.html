@@ -56,8 +56,9 @@
     placed=[]; hintEl.textContent='';
     const r=rounds[i];
     progressEl.textContent=(i+1)+' / '+rounds.length;
-    clueEl.innerHTML = (r.emoji ? `<span class="spell-emoji">${r.emoji}</span>` : '')
-      + `<div class="spell-word-clue">${r.clue}</div>`;
+    const vis = r.pic ? `<img class="game-pic" src="/pic/${r.pic}" alt="">`
+      : (r.emoji ? `<span class="spell-emoji">${r.emoji}</span>` : '');
+    clueEl.innerHTML = vis + `<div class="spell-word-clue">${r.clue}</div>`;
     renderCells();
     let scr=shuffle(r.word.split(''));
     if(scr.join('')===r.word) scr=shuffle(scr);
