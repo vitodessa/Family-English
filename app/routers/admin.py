@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.analytics import family_overview, user_analytics
 from app.config import CEFR_ORDER, reporting_enabled
 from app.database import get_db
 from app.deps import get_current_user
@@ -51,6 +52,18 @@ def admin_page(request: Request, db: Session = Depends(get_db)):
         words_total=db.query(Word).count(),
         reporting=reporting_enabled(),
     )
+
+
+@router.get("/admin/analytics")
+def admin_analytics(request: Request, db: Session = Depends(get_db)):
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/login", status_code=302)
+    overview = family_overview(db)
+    users = [user_analytics(db, u)
+             for u in db.query(User).filter(User.is_admin == False).order_by(User.id).all()]  # noqa: E712
+    return render(request, "admin_analytics.html", db=db,
+                  overview=overview, users=users)
 
 
 @router.post("/admin/send-report/{user_id}")

@@ -376,6 +376,33 @@ a.mod:hover .ico{transform:scale(1.15) rotate(-4deg)}
 .pb-fill{display:block;height:100%;background:linear-gradient(90deg,#7c5cff,#57c785)}
 .pb-num{width:44px;text-align:right;color:var(--muted,#888);font-size:.9rem}
 .lvl-select{padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ddd);font-size:1rem;margin-left:6px}
+/* аналитика */
+.an-table-wrap{overflow-x:auto;margin:14px 0 26px}
+.an-table{width:100%;border-collapse:collapse;font-size:.95rem}
+.an-table th,.an-table td{padding:9px 12px;text-align:center;border-bottom:1px solid var(--line,#eee)}
+.an-table th{color:var(--muted,#888);font-weight:600;font-size:.85rem}
+.an-table td:first-child,.an-table th:first-child{text-align:left}
+.an-user{margin:0 0 34px;padding:18px;border:1px solid var(--line,#eee);border-radius:16px;background:var(--card,#fff)}
+.an-user h2{margin:0 0 12px}
+.an-tiles{grid-template-columns:repeat(3,1fr)}
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:640px){.an-grid{grid-template-columns:1fr}}
+.an-card{padding:12px 14px;border:1px solid var(--line,#eee);border-radius:14px;background:var(--bg,#fafaff)}
+.an-h{font-weight:700;margin-bottom:10px;font-size:.95rem}
+.an-h .muted{font-weight:400;font-size:.8rem;margin-left:4px}
+.spark{display:flex;align-items:flex-end;gap:2px;height:70px}
+.spark-bar{flex:1;min-width:3px;background:linear-gradient(180deg,#7c5cff,#9b7bff);border-radius:3px 3px 0 0;min-height:2px}
+.spark-acc .spark-bar{background:linear-gradient(180deg,#57c785,#3a9c67)}
+.spark-bar.empty{background:var(--line,#e6e6ef)}
+.deck-states{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.ds-n{font-size:1.5rem;font-weight:800}
+.ds-l{font-size:.78rem;color:var(--muted,#888)}
+.weak-list{list-style:none;padding:0;margin:0}
+.weak-list li{padding:5px 0;border-bottom:1px solid var(--line,#f0f0f0)}
+.weak-n{float:right;color:var(--again,#e0556b);font-weight:700}
+.pb-lv.wide{width:150px;font-weight:500;font-size:.85rem;text-align:left}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--line,#eee);border-radius:20px;padding:4px 10px;font-size:.85rem}
 .quiz .hint{text-align:center;color:var(--muted);margin:10px 0 2px}
 .quiz .prompt{font-size:2.2rem;font-weight:700;text-align:center;margin:6px 0 22px;
   display:flex;align-items:center;justify-content:center;gap:12px}

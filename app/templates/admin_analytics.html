@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Аналитика — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/admin">← Админка</a></div>
+<h1>Аналитика обучения 📊</h1>
+<p class="muted">Реальная картина усвоения — из истории повторений и памяти карточек,
+  а не из игровых очков.</p>
+
+{# ---------- Сводка по семье ---------- #}
+<div class="an-table-wrap">
+<table class="an-table">
+  <thead><tr>
+    <th>Ученик</th><th>Уровень</th><th>В памяти</th><th>Точность</th>
+    <th>За 7 дней</th><th>Серия</th><th>Всего</th><th>🪙</th>
+  </tr></thead>
+  <tbody>
+  {% for r in overview %}
+    <tr>
+      <td><b>{{ r.user.name }}</b></td>
+      <td>{{ r.user.cefr_level }}</td>
+      <td><b>{{ r.learned }}</b></td>
+      <td>{{ r.retention }}%</td>
+      <td>{{ r.reviews_7 }}</td>
+      <td>{{ r.streak }} дн.</td>
+      <td>{{ r.total_reviews }}</td>
+      <td>{{ r.tokens }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{# ---------- Разбор по каждому ---------- #}
+{% for a in users %}
+<section class="an-user">
+  <h2>{{ a.user.name }} <span class="muted">· {{ a.user.cefr_level }}</span></h2>
+
+  <div class="stats an-tiles">
+    <div class="stat"><div class="num">{{ a.learned }}</div><div class="lbl">слов в памяти</div></div>
+    <div class="stat"><div class="num">{{ a.retention }}%</div><div class="lbl">точность</div></div>
+    <div class="stat"><div class="num">{{ a.streak }}</div><div class="lbl">дней подряд</div></div>
+    <div class="stat"><div class="num">{{ a.reviews_7 }}</div><div class="lbl">за 7 дней</div></div>
+    <div class="stat"><div class="num">{{ a.total_reviews }}</div><div class="lbl">всего повторений</div></div>
+    <div class="stat"><div class="num">{{ a.active_days }}</div><div class="lbl">дней учёбы</div></div>
+  </div>
+
+  {% if a.total_reviews == 0 %}
+    <p class="muted">Пока нет повторений — как начнёт учиться, здесь появятся графики.</p>
+  {% else %}
+
+  <div class="an-grid">
+    {# активность за 30 дней #}
+    <div class="an-card">
+      <div class="an-h">Активность за 30 дней <span class="muted">повторений в день</span></div>
+      <div class="spark">
+        {% for d in a.activity %}
+        <span class="spark-bar" style="height:{{ ((d.count / a.act_max * 100) | round) if a.act_max else 0 }}%"
+              title="{{ d.date }}: {{ d.count }}"></span>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# точность по неделям #}
+    <div class="an-card">
+      <div class="an-h">Точность по неделям <span class="muted">8 недель</span></div>
+      <div class="spark spark-acc">
+        {% for w in a.weeks %}
+        <span class="spark-bar {% if w.acc is none %}empty{% endif %}"
+              style="height:{{ w.acc if w.acc is not none else 0 }}%"
+              title="{% if w.acc is not none %}{{ w.acc }}% ({{ w.n }}){% else %}нет данных{% endif %}"></span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="an-grid">
+    {# прогресс по уровням #}
+    {% if a.level_prog %}
+    <div class="an-card">
+      <div class="an-h">Прогресс по уровням <span class="muted">в памяти / всего</span></div>
+      <div class="place-bars">
+        {% for lp in a.level_prog %}
+        <div class="pb-row"><span class="pb-lv">{{ lp.level }}</span>
+          <span class="pb-track"><span class="pb-fill" style="width:{{ lp.pct }}%"></span></span>
+          <span class="pb-num">{{ lp.learned }}/{{ lp.total }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# состояние колоды #}
+    <div class="an-card">
+      <div class="an-h">Состояние колоды</div>
+      <div class="deck-states">
+        {% for s in a.deck_states %}
+        <div class="ds"><div class="ds-n">{{ s.count }}</div><div class="ds-l">{{ s.label }}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="an-grid">
+    {# слабые слова #}
+    <div class="an-card">
+      <div class="an-h">Слабые слова <span class="muted">чаще всего «Снова»</span></div>
+      {% if a.weak %}
+      <ul class="weak-list">
+        {% for w in a.weak %}
+        <li><b>{{ w.front }}</b> — {{ w.back }} <span class="weak-n">×{{ w.fails }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">Пока нет упорных ошибок — хорошо!</p>{% endif %}
+    </div>
+
+    {# активность по модулям #}
+    <div class="an-card">
+      <div class="an-h">По модулям <span class="muted">чем занимался</span></div>
+      {% if a.modules %}
+      <div class="place-bars">
+        {% for m in a.modules %}
+        <div class="pb-row"><span class="pb-lv wide">{{ m.label }}</span>
+          <span class="pb-track"><span class="pb-fill" style="width:{{ ((m.count / a.mod_max * 100) | round) if a.mod_max else 0 }}%"></span></span>
+          <span class="pb-num">{{ m.count }}</span></div>
+        {% endfor %}
+      </div>
+      {% else %}<p class="muted">Активности по модулям пока нет.</p>{% endif %}
+    </div>
+  </div>
+
+  {% if a.mistakes %}
+  <div class="an-card">
+    <div class="an-h">Ошибки по категориям <span class="muted">из разговора и письма</span></div>
+    <div class="chips">
+      {% for m in a.mistakes %}<span class="chip">{{ m.cat }} · {{ m.count }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}
