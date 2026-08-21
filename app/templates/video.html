@@ -6,6 +6,8 @@
   <p class="muted">Смотри ролик и вписывай пропущенные слова из транскрипта.</p>
 </section>
 
+{% if error %}<div class="fb-card" style="border-color:var(--again,#e0556b)">⚠️ {{ error }}</div>{% endif %}
+
 {% if items %}
   <div class="read-list">
     {% for it in items %}
@@ -27,10 +29,11 @@
     <label>Ссылка YouTube
       <input name="url" placeholder="https://www.youtube.com/watch?v=..." required></label>
     <label>Название <input name="title" placeholder="напр. Dear Kitten"></label>
-    <label>Транскрипт (текст ролика по-английски)
-      <textarea name="transcript" rows="6" required
-        placeholder="Вставь субтитры / текст ролика — AI сам выберет пропуски под уровень"></textarea></label>
+    <label>Транскрипт <span class="muted">(необязательно — подтянем субтитры сами)</span>
+      <textarea name="transcript" rows="5"
+        placeholder="Можно оставить пустым: если у ролика есть английские субтитры, подтянем автоматически. Если нет — вставь текст сюда."></textarea></label>
     <button class="btn primary" type="submit">Добавить</button>
+    <p class="muted" style="margin-top:8px;font-size:.85rem">Совет: если субтитры не подтянулись — на YouTube нажми «…» → «Показать расшифровку», скопируй текст и вставь в поле.</p>
   </form>
 </div>
 {% else %}
