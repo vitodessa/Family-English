@@ -28,12 +28,9 @@
   <form method="post" action="/video/add">
     <label>Ссылка YouTube
       <input name="url" placeholder="https://www.youtube.com/watch?v=..." required></label>
-    <label>Название <input name="title" placeholder="напр. Dear Kitten"></label>
-    <label>Транскрипт <span class="muted">(необязательно — подтянем субтитры сами)</span>
-      <textarea name="transcript" rows="5"
-        placeholder="Можно оставить пустым: если у ролика есть английские субтитры, подтянем автоматически. Если нет — вставь текст сюда."></textarea></label>
+    <label>Название <input name="title" placeholder="напр. The Wheels on the Bus"></label>
     <button class="btn primary" type="submit">Добавить</button>
-    <p class="muted" style="margin-top:8px;font-size:.85rem">Совет: если субтитры не подтянулись — на YouTube нажми «…» → «Показать расшифровку», скопируй текст и вставь в поле.</p>
+    <p class="muted" style="margin-top:8px;font-size:.85rem">Нужна только ссылка. После просмотра ученик пишет 1–2 предложения о ролике — ИИ проверит.</p>
   </form>
 </div>
 {% else %}

@@ -13,23 +13,11 @@
     allowfullscreen></iframe>
 </div>
 
-<p class="muted">Смотри и впиши пропущенные слова:</p>
-<form method="post" action="/video/{{ item.id }}/check" class="listen-form">
-  <div class="cloze-text">
-    {%- for seg in segments -%}
-      {{ seg }}
-      {%- if not loop.last -%}
-        {%- set i = loop.index0 -%}
-        {%- if choice_mode -%}
-          <select name="a{{ i }}" class="blank-sel" required>
-            {% for opt in options[i] %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
-          </select>
-        {%- else -%}
-          <input name="a{{ i }}" class="blank-inp" autocomplete="off" autocapitalize="off" required>
-        {%- endif -%}
-      {%- endif -%}
-    {%- endfor -%}
-  </div>
-  <button class="btn primary big-btn" type="submit" style="margin-top:18px">Проверить</button>
+<form method="post" action="/video/{{ item.id }}/reflect" class="form-card" style="margin-top:20px">
+  <label>Посмотрел? Напиши <b>1–2 предложения по-английски</b> о ролике — о чём он / что понравилось.
+    <textarea name="text" rows="3" required minlength="10"
+      placeholder="e.g. This video is about a bus. The wheels go round and round. I liked the song."></textarea></label>
+  <button class="btn primary big-btn" type="submit">Готово</button>
+  <p class="muted" style="margin-top:8px;font-size:.85rem">Не нужно точно — просто пару фраз своими словами, по-английски.</p>
 </form>
 {% endblock %}

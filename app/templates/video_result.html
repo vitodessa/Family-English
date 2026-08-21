@@ -2,27 +2,27 @@
 {% block title %}Результат — Видео{% endblock %}
 {% block content %}
 <section class="dash-head">
-  <h1>Результат: {{ correct }} / {{ total }}</h1>
+  <h1>{% if ok %}✅ Засчитано!{% else %}Почти{% endif %}</h1>
   <p class="muted">{{ item.title }}</p>
 </section>
 
+{% if feedback %}<div class="fb-card">💬 {{ feedback }}</div>{% endif %}
+
 <div class="card">
-  {% for r in results %}
-  <div style="padding:8px 0;border-top:1px solid var(--line)">
-    {% if r.ok %}
-      <span style="color:var(--good)">✓ {{ r.answer }}</span>
-    {% else %}
-      <span style="color:var(--again)">{{ r.given or '—' }}</span> ·
-      <b style="color:var(--good)">{{ r.answer }}</b>
-    {% endif %}
-  </div>
-  {% endfor %}
+  <div class="muted" style="font-size:.85rem;margin-bottom:4px">Твой отклик:</div>
+  {{ text }}
 </div>
 
+{% if not ok %}
+<p class="muted" style="margin-top:10px">Допиши пару фраз по-английски о ролике — и блок засчитается.</p>
+{% endif %}
+
 <div class="cta" style="justify-content:flex-start;margin-top:22px">
-  <a class="btn primary" href="/lesson/next">Дальше по уроку →</a>
-  <a class="btn" href="/video/{{ item.id }}">↻ Ещё раз</a>
+  {% if ok %}
+    <a class="btn primary" href="/lesson/next">Дальше по уроку →</a>
+  {% else %}
+    <a class="btn primary" href="/video/{{ item.id }}">← Дописать</a>
+  {% endif %}
   <a class="btn" href="/video">К видео</a>
-  <a class="btn" href="/speaking/review">📊 Разбор ошибок</a>
 </div>
 {% endblock %}

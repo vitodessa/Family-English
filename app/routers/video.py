@@ -15,15 +15,46 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app import listening_service
 from app.activity import touch_session
-from app.config import CEFR_ORDER, reading_enabled
+from app.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL, CEFR_ORDER, reading_enabled
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import ContentItem, Mistake
+from app.models import ContentItem
 from app.templating import render
 
 router = APIRouter()
+
+
+def _judge_reflection(title: str, text: str) -> dict:
+    """ИИ-проверка отклика: 1-2 связных английских предложения о ролике. {ok, feedback}."""
+    system = (
+        "Ты проверяешь короткий отклик ученика после просмотра англоязычного ролика. "
+        "Засчитай (ok=true), если это 1-2 осмысленных предложения НА АНГЛИЙСКОМ — искренняя попытка "
+        "рассказать/подумать о ролике. Не придирайся к грамматике и к тому, точно ли по теме — "
+        "главное, что написано по-английски и осмысленно. ok=false только если пусто, не по-английски "
+        "или бессмыслица/случайный набор. Дай короткий доброжелательный feedback по-русски. "
+        'Верни СТРОГО JSON: {"ok": true/false, "feedback": "..."}.'
+    )
+    user = "Ролик: " + (title or "")[:150] + "\nОтклик ученика:\n" + (text or "")[:1500]
+    try:
+        r = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"},
+            json={"model": ANTHROPIC_MODEL, "max_tokens": 300, "system": system,
+                  "messages": [{"role": "user", "content": user}]},
+            timeout=40,
+        )
+        r.raise_for_status()
+        txt = "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type") == "text")
+        txt = txt.strip()
+        if txt.startswith("```"):
+            txt = re.sub(r"^```[a-zA-Z]*\n?", "", txt).rstrip("`").strip()
+        m = re.search(r"\{.*\}", txt, re.S)
+        d = json.loads(m.group(0) if m else txt)
+        return {"ok": bool(d.get("ok")), "feedback": str(d.get("feedback", ""))[:500]}
+    except Exception:  # noqa: BLE001
+        return {"ok": False, "feedback": ""}
 
 _YT = re.compile(r"(?:v=|youtu\.be/|embed/|shorts/)([A-Za-z0-9_-]{11})")
 
@@ -91,33 +122,16 @@ def video_home(request: Request, err: str = "", db: Session = Depends(get_db)):
 
 @router.post("/video/add")
 def video_add(request: Request, url: str = Form(""), title: str = Form(""),
-              transcript: str = Form(""), db: Session = Depends(get_db)):
+              db: Session = Depends(get_db)):
+    """Добавить ролик — нужна только ссылка YouTube (упражнение — отклик, не клоуз)."""
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=302)
-    if not reading_enabled():
-        return RedirectResponse("/video", status_code=302)
-
     yt = _youtube_id(url)
     if not yt:
         return RedirectResponse("/video?err=url", status_code=303)
-
-    transcript = (transcript or "").strip()
-    if len(transcript) < 20:                       # нет транскрипта — тянем субтитры сами
-        transcript = fetch_transcript(yt)
-    if len(transcript) < 20:
-        return RedirectResponse("/video?err=transcript", status_code=303)
-
     level = (user.cefr_level or "A1").upper()
-    try:
-        answers = listening_service.pick_blanks(transcript, level)
-        cloze, used = listening_service._build_cloze(transcript, answers)
-    except Exception:  # noqa: BLE001
-        return RedirectResponse("/video?err=cloze", status_code=303)
-    if not used:
-        return RedirectResponse("/video?err=cloze", status_code=303)
-
-    body = {"youtube": yt, "full": transcript, "cloze": cloze, "answers": used}
+    body = {"youtube": yt}
     item = ContentItem(title=(title.strip() or "Видео")[:120], body=json.dumps(body, ensure_ascii=False),
                        kind="video", cefr_level=level, created_by=user.id)
     db.add(item)
@@ -145,47 +159,23 @@ def video_item(item_id: int, request: Request, db: Session = Depends(get_db)):
     item, data = _load(db, item_id)
     if not item or not data:
         return RedirectResponse("/video", status_code=302)
-
-    answers = data.get("answers", [])
-    segments = data.get("cloze", "").split("___")
-    level = (user.cefr_level or "A1").upper()
-    choice_mode = level in ("A1", "A2")
-    options = None
-    if choice_mode:
-        options = []
-        for i, ans in enumerate(answers):
-            pool = [a for j, a in enumerate(answers) if j != i]
-            random.shuffle(pool)
-            opts = [ans] + pool[:2]
-            random.shuffle(opts)
-            options.append(opts)
-    return render(request, "video_item.html", db=db, item=item, youtube=data.get("youtube", ""),
-                  segments=segments, n=len(answers), options=options, choice_mode=choice_mode)
+    return render(request, "video_item.html", db=db, item=item, youtube=data.get("youtube", ""))
 
 
-@router.post("/video/{item_id}/check")
-async def video_check(item_id: int, request: Request, db: Session = Depends(get_db)):
+@router.post("/video/{item_id}/reflect")
+def video_reflect(item_id: int, request: Request, text: str = Form(""),
+                  db: Session = Depends(get_db)):
+    """Проверка после просмотра: 1-2 предложения по-английски о ролике (оценивает ИИ)."""
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=302)
     item, data = _load(db, item_id)
     if not item or not data:
         return RedirectResponse("/video", status_code=302)
-
-    answers = data.get("answers", [])
-    form = await request.form()
-    results, correct = [], 0
-    for i, ans in enumerate(answers):
-        given = str(form.get(f"a{i}", "")).strip()
-        ok = given.lower() == ans.strip().lower()
-        if ok:
-            correct += 1
-        else:
-            db.add(Mistake(user_id=user.id, original=(given or "—")[:1000], correction=ans[:1000],
-                           explanation="пропущенное слово в видео", category="listening",
-                           source_module="video"))
-        results.append({"answer": ans, "given": given, "ok": ok})
-    db.commit()
-    touch_session(db, user.id, "video", f"{item.title}: {correct}/{len(answers)}")
-    return render(request, "video_result.html", db=db,
-                  item=item, results=results, correct=correct, total=len(answers))
+    text = (text or "").strip()
+    res = _judge_reflection(item.title, text)
+    if res["ok"]:
+        touch_session(db, user.id, "video", f"{item.title}: отклик")
+    return render(request, "video_result.html", db=db, item=item,
+                  youtube=data.get("youtube", ""), text=text,
+                  ok=res["ok"], feedback=res["feedback"])
