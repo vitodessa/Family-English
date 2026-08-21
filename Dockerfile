@@ -8,6 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY scripts ./scripts
 # Дымовой тест гоняется внутри контейнера после деплоя (см. deploy.yml)
 COPY smoke_test.py .
 
