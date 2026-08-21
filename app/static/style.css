@@ -358,6 +358,11 @@ a.mod:hover .ico{transform:scale(1.15) rotate(-4deg)}
 .q-emoji{font-size:4.4rem;line-height:1;text-align:center;margin:8px 0 2px}
 .dk-btn{display:block;margin:12px auto 0;opacity:.9}
 .test-dk{opacity:.72}
+/* голосовая проверка чтения */
+.read-check{margin-top:26px;padding:16px 18px;border:1px solid var(--line,#eee);border-radius:16px;background:var(--bg,#fafaff)}
+.read-check h3{margin:0 0 8px}
+.rc-live{min-height:1.3em;margin:8px 0;font-style:italic;word-break:break-word}
+.rc-result{margin:8px 0}
 .q-pic{text-align:center;margin:6px 0 2px}
 .q-pic img{width:132px;height:132px;object-fit:contain;border-radius:16px;
   background:#fff;padding:6px;box-shadow:0 2px 10px rgba(0,0,0,.06)}

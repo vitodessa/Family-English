@@ -5,6 +5,7 @@
 """
 
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -18,10 +19,36 @@ from app.config import CEFR_ORDER, reading_enabled
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import ContentItem, Word
+from app.models import Session as ConvSession
 from app.seed import add_words_for_user
 from app.templating import render
 
 router = APIRouter()
+
+READ_PASS = 50   # порог точности чтения вслух, %
+TR_PASS = 50     # порог оценки перевода
+
+
+def _day_start() -> datetime:
+    d = datetime.utcnow().date()
+    return datetime(d.year, d.month, d.day)
+
+
+def _did_reading_r1(db, user_id: int) -> bool:
+    return (db.query(ConvSession)
+            .filter(ConvSession.user_id == user_id, ConvSession.module == "reading_r1_done",
+                    ConvSession.started_at >= _day_start()).first()) is not None
+
+
+def _plain_source(item) -> str:
+    """Текст для чтения вслух: тело текста или склейка фраз."""
+    if item.kind == "phrases":
+        try:
+            ph = json.loads(item.body or "[]")
+        except (json.JSONDecodeError, ValueError):
+            ph = []
+        return " ".join(str(p.get("phrase", "")) for p in ph)
+    return item.body or ""
 
 
 def _allowed_levels(user) -> list[str]:
@@ -40,6 +67,10 @@ class TranslateIn(BaseModel):
 class AddWordIn(BaseModel):
     word: str
     translation: str
+
+
+class TranscriptIn(BaseModel):
+    transcript: str = ""
 
 
 @router.get("/reading")
@@ -127,7 +158,6 @@ def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
             phrases = json.loads(item.body or "[]")
         except (json.JSONDecodeError, ValueError):
             phrases = []
-        touch_session(db, user.id, "reading", item.title)
         return render(request, "reading_phrases.html", db=db, item=item, phrases=phrases,
                       enabled=reading_enabled())
     # Старые тексты без глоссария — соберём один раз при первом открытии.
@@ -137,8 +167,60 @@ def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
             db.commit()
         except Exception:  # noqa: BLE001
             pass
-    touch_session(db, user.id, "reading", item.title)
     return render(request, "reading_item.html", db=db, item=item, enabled=reading_enabled())
+
+
+@router.post("/reading/{item_id}/read-check")
+def reading_read_check(item_id: int, request: Request, data: TranscriptIn,
+                       db: Session = Depends(get_db)):
+    """Раунд 1: чтение вслух. Сверяем распознанное с текстом → точность."""
+    user = get_current_user(request, db)
+    if not user:
+        return JSONResponse({"error": "auth"}, status_code=401)
+    item = db.query(ContentItem).filter(ContentItem.id == item_id).first()
+    if not item:
+        return JSONResponse({"error": "нет текста"}, status_code=404)
+    pct, missed = reading_service.read_accuracy(_plain_source(item), data.transcript)
+    passed = pct >= READ_PASS
+    if passed:
+        touch_session(db, user.id, "reading_r1_done", f"Чтение вслух: {pct}%")
+    return {"pct": pct, "missed": missed, "passed": passed, "need": READ_PASS}
+
+
+@router.post("/reading/{item_id}/translate-check")
+def reading_translate_check(item_id: int, request: Request, data: TranscriptIn,
+                            db: Session = Depends(get_db)):
+    """Раунд 2: устный перевод на русский. Оценивает Claude; при успехе — блок зачтён."""
+    user = get_current_user(request, db)
+    if not user:
+        return JSONResponse({"error": "auth"}, status_code=401)
+    if not reading_enabled():
+        return JSONResponse({"error": "ИИ не настроен"}, status_code=503)
+    item = db.query(ContentItem).filter(ContentItem.id == item_id).first()
+    if not item:
+        return JSONResponse({"error": "нет текста"}, status_code=404)
+    res = reading_service.judge_translation(_plain_source(item), data.transcript,
+                                            user.cefr_level or "A1")
+    passed = res["score"] >= TR_PASS
+    done = False
+    if passed and _did_reading_r1(db, user.id):   # зачёт блока — оба раунда пройдены
+        touch_session(db, user.id, "reading", item.title)
+        done = True
+    return {"score": res["score"], "feedback": res["feedback"],
+            "passed": passed, "done": done, "need": TR_PASS}
+
+
+@router.post("/reading/{item_id}/mark-read")
+def reading_mark_read(item_id: int, request: Request, db: Session = Depends(get_db)):
+    """Запасной зачёт, если в браузере нет распознавания речи/микрофона."""
+    user = get_current_user(request, db)
+    if not user:
+        return JSONResponse({"error": "auth"}, status_code=401)
+    item = db.query(ContentItem).filter(ContentItem.id == item_id).first()
+    if not item:
+        return JSONResponse({"error": "нет текста"}, status_code=404)
+    touch_session(db, user.id, "reading", item.title)
+    return {"done": True}
 
 
 @router.post("/reading/translate")

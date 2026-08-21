@@ -53,6 +53,55 @@ def _parse_json(raw: str) -> dict[str, Any]:
         return {}
 
 
+def _tokens(t: str) -> list:
+    return re.findall(r"[a-z']+", (t or "").lower())
+
+
+def read_accuracy(source: str, transcript: str) -> tuple[int, list]:
+    """Насколько прочитанное вслух (распознанный transcript) совпадает с текстом.
+
+    Мешок слов: каждое слово оригинала засчитываем, если оно есть в распознанном.
+    Возвращает (процент, до 12 пропущенных слов). Толерантно к порядку и огрехам STT.
+    """
+    from collections import Counter
+    src = _tokens(source)
+    if not src:
+        return 0, []
+    have = Counter(_tokens(transcript))
+    matched, missed = 0, []
+    for w in src:
+        if have[w] > 0:
+            have[w] -= 1
+            matched += 1
+        else:
+            missed.append(w)
+    pct = round(matched / len(src) * 100)
+    seen, miss_u = set(), []
+    for w in missed:
+        if w not in seen:
+            seen.add(w)
+            miss_u.append(w)
+    return pct, miss_u[:12]
+
+
+def judge_translation(english: str, russian: str, level: str) -> dict:
+    """Оценить устный перевод на русский (Claude). Возвращает {score 0-100, feedback}."""
+    system = (
+        "Ты оцениваешь УСТНЫЙ перевод английского текста на русский, сделанный учеником с листа. "
+        "Оценивай передачу СМЫСЛА, а не точность формулировок; будь снисходителен (это перевод на слух, "
+        "плюс возможны огрехи распознавания голоса). "
+        'Верни СТРОГО JSON: {"score": <0-100>, "feedback": "1-2 коротких предложения по-русски"}.'
+    )
+    user = ("Английский текст:\n" + (english or "")[:3000]
+            + "\n\nПеревод ученика (распознан с голоса):\n" + (russian or "")[:3000])
+    try:
+        d = _parse_json(_call(system, user, max_tokens=400, model=ANTHROPIC_MODEL))
+        score = int(float(d.get("score", 0)))
+        return {"score": max(0, min(100, score)), "feedback": str(d.get("feedback", ""))[:500]}
+    except Exception:  # noqa: BLE001
+        return {"score": 0, "feedback": ""}
+
+
 def generate_text(level: str, topic: str) -> tuple[str, str]:
     """Сгенерировать короткий текст под уровень. Возвращает (заголовок, тело)."""
     level = (level or "A1").upper()

@@ -107,4 +107,101 @@
   }
 })();
 </script>
+
+<section class="read-check" id="readcheck" data-id="{{ item.id }}" data-ai="{{ 1 if enabled else 0 }}">
+  <h3>🎤 Проверка чтения</h3>
+
+  <div id="rc-unsupported" class="fb-card" hidden>
+    В этом браузере нет распознавания речи.
+    <button class="btn" id="rc-fallback" type="button">Прочитал(а) ✓</button>
+  </div>
+
+  <div id="rc-round1">
+    <p class="muted">Раунд 1 — прочитай текст вслух.</p>
+    <button class="btn primary" id="rc-read-btn" type="button">🎤 Читать вслух</button>
+    <div class="rc-live muted" id="rc-read-live"></div>
+    <div class="rc-result" id="rc-read-result" hidden></div>
+  </div>
+
+  <div id="rc-round2" hidden>
+    <p class="muted">Раунд 2 — переведи текст вслух на русский (по смыслу, своими словами).</p>
+    <button class="btn primary" id="rc-tr-btn" type="button">🎤 Перевести вслух</button>
+    <div class="rc-live muted" id="rc-tr-live"></div>
+    <div class="rc-result" id="rc-tr-result" hidden></div>
+  </div>
+
+  <div id="rc-done" class="ok" hidden style="margin-top:12px">
+    ✅ Чтение засчитано! <a href="/lesson">← к уроку дня</a>
+  </div>
+</section>
+
+<script>
+(function(){
+  const box = document.getElementById('readcheck');
+  const id = box.dataset.id, aiEnabled = box.dataset.ai === '1';
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const $ = s => document.getElementById(s);
+  let active = null;   // текущая запись
+
+  if(!SR){
+    $('rc-unsupported').hidden = false; $('rc-round1').hidden = true;
+  }
+  $('rc-fallback').onclick = () => {
+    fetch('/reading/'+id+'/mark-read', {method:'POST'}).then(()=>done());
+  };
+
+  function startRec(lang, liveEl){
+    const st = {finalText:'', stopping:false};
+    const rec = new SR(); rec.lang = lang; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = e => {
+      let interim = '';
+      for(let i=e.resultIndex; i<e.results.length; i++){
+        const t = e.results[i][0].transcript;
+        if(e.results[i].isFinal) st.finalText += ' ' + t; else interim += t;
+      }
+      liveEl.textContent = (st.finalText + ' ' + interim).trim();
+    };
+    rec.onend = () => { if(!st.stopping){ try{ rec.start(); }catch(e){} } };
+    st.rec = rec; try{ rec.start(); }catch(e){}
+    return st;
+  }
+  function stopRec(st){ st.stopping = true; try{ st.rec.stop(); }catch(e){} return (st.finalText||'').trim(); }
+
+  function done(){ $('rc-done').hidden = false; window.confetti&&confetti(); window.sfx&&sfx.win(); }
+
+  // Раунд 1 — чтение вслух
+  const r1 = $('rc-read-btn');
+  r1.onclick = () => {
+    if(!active){ active = startRec('en-US', $('rc-read-live')); r1.textContent = '⏹ Готово'; return; }
+    const text = stopRec(active); active = null; r1.textContent = '🎤 Читать вслух'; r1.disabled = true;
+    const res = $('rc-read-result'); res.hidden = false; res.textContent = 'Проверяю…';
+    fetch('/reading/'+id+'/read-check', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({transcript: text})}).then(r=>r.json()).then(d=>{
+        res.innerHTML = 'Точность: <b>'+d.pct+'%</b> (нужно '+d.need+'%). ' +
+          (d.passed ? '✅ Зачёт чтения.' : 'Маловато — попробуй ещё раз.') +
+          (d.missed && d.missed.length ? '<div class="muted">Не распозналось: '+d.missed.join(', ')+'</div>' : '');
+        r1.disabled = false;
+        if(d.passed){
+          if(aiEnabled) $('rc-round2').hidden = false;
+          else fetch('/reading/'+id+'/mark-read', {method:'POST'}).then(()=>done());
+        }
+      }).catch(()=>{ res.textContent = 'Ошибка сети'; r1.disabled = false; });
+  };
+
+  // Раунд 2 — устный перевод
+  const r2 = $('rc-tr-btn');
+  r2.onclick = () => {
+    if(!active){ active = startRec('ru-RU', $('rc-tr-live')); r2.textContent = '⏹ Готово'; return; }
+    const text = stopRec(active); active = null; r2.textContent = '🎤 Перевести вслух'; r2.disabled = true;
+    const res = $('rc-tr-result'); res.hidden = false; res.textContent = 'Оцениваю перевод…';
+    fetch('/reading/'+id+'/translate-check', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({transcript: text})}).then(r=>r.json()).then(d=>{
+        res.innerHTML = 'Оценка перевода: <b>'+d.score+'</b>/100. ' + (d.feedback||'') +
+          (d.passed ? '' : '<div class="muted">Порог '+d.need+' — попробуй передать смысл полнее.</div>');
+        r2.disabled = false;
+        if(d.done) done();
+      }).catch(()=>{ res.textContent = 'Ошибка сети'; r2.disabled = false; });
+  };
+})();
+</script>
 {% endblock %}
