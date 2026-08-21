@@ -12,7 +12,10 @@
 
   <div class="quiz" id="quiz" data-correct="{{ quiz.correct }}"
        data-word="{{ quiz.en_word }}" data-direction="{{ quiz.direction }}">
-    {% if quiz.emoji %}<div class="q-emoji">{{ quiz.emoji }}</div>{% endif %}
+    {% if quiz.pic %}
+      <div class="q-pic"><img src="/pic/{{ quiz.pic }}" alt="" loading="lazy"
+           onerror="this.closest('.q-pic').remove()"></div>
+    {% elif quiz.emoji %}<div class="q-emoji">{{ quiz.emoji }}</div>{% endif %}
     <div class="hint">{{ quiz.hint }}</div>
     <div class="prompt">
       <span>{{ quiz.prompt }}</span>

@@ -18,6 +18,7 @@ from app.deps import get_current_user
 from app.emoji_map import emoji_for
 from app.fsrs_service import apply_review
 from app.models import Card, LearningEvent, User, Word
+from app.pictograms import has_pictogram
 from app.seed import top_up_deck
 from app.templating import render
 from app.token_service import balance as token_balance
@@ -81,7 +82,8 @@ def _make_quiz(db: Session, card: Card) -> dict:
         "options": options,
         "hint": hint,
         "en_word": card.front,       # для озвучки английского слова
-        "emoji": emoji_for(card.front),  # «картинка» слова, если есть
+        "pic": card.front.strip().lower() if has_pictogram(card.front) else "",  # пиктограмма ARASAAC
+        "emoji": emoji_for(card.front),  # запасная «картинка» слова, если пиктограммы нет
     }
 
 

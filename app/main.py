@@ -13,7 +13,7 @@ from app.database import Base, SessionLocal, engine, get_db
 from app.deps import get_current_user
 from app.routers import (
     achievements, admin, auth, challenge, checklist, family, games, grammar, lesson, listening,
-    reading, speaking, study, tokens, vocab, video, writing,
+    pics, reading, speaking, study, tokens, vocab, video, writing,
 )
 from app.seed import ensure_admin, ensure_grammar_topics, seed_words
 from app.templating import render
@@ -41,6 +41,7 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
 
 app.include_router(auth.router)
+app.include_router(pics.router)
 app.include_router(study.router)
 app.include_router(vocab.router)
 app.include_router(speaking.router)
