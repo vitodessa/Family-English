@@ -51,9 +51,11 @@ def writing_review(
     level = (user.cefr_level or "A1").upper()
     try:
         parsed = writing_service.review(user, level, task, text)
-    except Exception as e:  # noqa: BLE001 — покажем ошибку на странице
-        return render(request, "writing.html", db=db, task=task,
-                      enabled=True, error=f"Не удалось разобрать: {e}", draft=text)
+    except Exception:  # noqa: BLE001 — ИИ был занят/сбой: дружелюбно, текст сохранён
+        return render(request, "writing.html", db=db, task=task, enabled=True,
+                      error="Не удалось разобрать сейчас — ИИ был занят. "
+                            "Твой текст сохранён ниже, нажми «Проверить» ещё раз.",
+                      draft=text)
 
     # Сессия + сохранение в единую память (ошибки и слова)
     conv = ConvSession(user_id=user.id, module="writing", topic=task[:200])

@@ -11,6 +11,7 @@ from typing import Any
 import httpx
 from sqlalchemy.orm import Session as DBSession
 
+from app import ai_http
 from app.config import (
     ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL,
@@ -108,22 +109,9 @@ def _call_claude(dynamic_context: str, history: list[dict[str, Any]],
          "cache_control": {"type": "ephemeral"}},
         {"type": "text", "text": dynamic_context},
     ]
-    resp = httpx.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-        json={"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
-              "system": system, "messages": history},
-        timeout=60,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return "".join(
-        b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"
-    )
+    payload = {"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
+               "system": system, "messages": history}
+    return ai_http.messages_text(payload)
 
 
 def _parse(raw: str) -> dict[str, Any]:

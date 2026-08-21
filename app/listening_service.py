@@ -8,9 +8,8 @@ import json
 import re
 from typing import Any
 
-import httpx
-
-from app.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL
+from app import ai_http
+from app.config import ANTHROPIC_MODEL
 
 LEVEL_BRIEF = {
     "A1": ("very simple spoken English, short present-tense sentences, about 40 words", 4),
@@ -23,17 +22,9 @@ LEVEL_BRIEF = {
 
 
 def _call(system: str, user: str, max_tokens: int) -> str:
-    resp = httpx.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
-                 "content-type": "application/json"},
-        json={"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
-              "system": system, "messages": [{"role": "user", "content": user}]},
-        timeout=60,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    payload = {"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
+               "system": system, "messages": [{"role": "user", "content": user}]}
+    return ai_http.messages_text(payload)
 
 
 def _parse_json(raw: str) -> dict[str, Any]:
