@@ -11,6 +11,7 @@ import httpx
 
 from app.config import (
     CEFR_ORDER,
+    GAME_MODULES,
     LESSON_CARDS,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID,
@@ -93,10 +94,10 @@ def lesson_complete(db, user_id: int) -> bool:
         return False
     mods = _modules_today(db, user_id)
     reviews, _ = _reviews_today(db, user_id)
-    played_game = any(m.startswith("game_") for m in mods)
+    all_games = all(m in mods for m in GAME_MODULES)   # нужно пройти ВСЕ игры
     return (reviews >= daily_norms(db, user)["cards"]
             and required_modules(db, user) <= mods
-            and played_game)
+            and all_games)
 
 
 def build_daily_report(db, user) -> str:
@@ -131,7 +132,8 @@ def build_daily_report(db, user) -> str:
     lines.append(f"{mark('writing_done' in mods)} Письмо")
     if speaking_enabled():
         lines.append(f"{mark('speaking_done' in mods)} Разговор")
-    lines.append(f"{mark(any(m.startswith('game_') for m in mods))} Игры")
+    games_done = sum(1 for m in GAME_MODULES if m in mods)
+    lines.append(f"{mark(games_done >= len(GAME_MODULES))} Игры ({games_done}/{len(GAME_MODULES)})")
     if _has_video(db, user):
         lines.append(f"{mark('video' in mods)} Видео")
     lines.append(f"{mark(test is not None)} Финальный тест"

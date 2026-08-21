@@ -13,7 +13,9 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.activity import touch_session
-from app.config import CEFR_ORDER, LESSON_CARDS, listening_enabled, speaking_enabled
+from app.config import (
+    CEFR_ORDER, GAME_MODULES, LESSON_CARDS, listening_enabled, speaking_enabled,
+)
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Card, ContentItem, LearningEvent
@@ -50,12 +52,13 @@ def _did_today(db: Session, user_id: int, module: str) -> bool:
                     ConvSession.started_at >= _day_start()).first()) is not None
 
 
-def _did_game_today(db: Session, user_id: int) -> bool:
-    """Сыграл ли сегодня хотя бы в одну игру (любой модуль game_*)."""
-    return (db.query(ConvSession)
+def _games_done_today(db: Session, user_id: int) -> int:
+    """Сколько РАЗНЫХ игр из раздела пройдено сегодня (для блока «пройти все игры»)."""
+    rows = (db.query(ConvSession.module)
             .filter(ConvSession.user_id == user_id,
-                    ConvSession.module.like("game_%"),
-                    ConvSession.started_at >= _day_start()).first()) is not None
+                    ConvSession.module.in_(GAME_MODULES),
+                    ConvSession.started_at >= _day_start()).all())
+    return len({m for (m,) in rows})
 
 
 def _allowed_levels(user) -> list:
@@ -104,9 +107,11 @@ def _build_steps(db: Session, user) -> list[dict]:
                       "desc": f"Хотя бы {n['speak_turns']} "
                               f"{_plural(n['speak_turns'], 'реплика', 'реплики', 'реплик')}",
                       "url": "/speaking", "done": _did_today(db, user.id, "speaking_done")})
+    games_done = _games_done_today(db, user.id)
+    games_total = len(GAME_MODULES)
     steps.append({"key": "games", "icon": "🎮", "name": "Игры",
-                  "desc": "Сыграй хотя бы в одну игру", "url": "/games",
-                  "done": _did_game_today(db, user.id)})
+                  "desc": f"Пройти все игры ({games_done}/{games_total})", "url": "/games",
+                  "done": games_done >= games_total})
     # Видео всегда в уроке: обязателен, если для уровня есть ролик; иначе — бонус с подсказкой
     has_v = _has_video(db, user)
     video_step = {"key": "video", "icon": "🎬", "name": "Видео",

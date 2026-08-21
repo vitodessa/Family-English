@@ -34,6 +34,12 @@ TOPUP_CARDS: int = int(os.getenv("TOPUP_CARDS", "10"))        # сколько �
 # Уровни CEFR в порядке возрастания — используется при подборе слов.
 CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
+# Игры раздела /games — для блока «Игры» в уроке дня нужно пройти ВСЕ.
+GAME_MODULES = [
+    "game_spell", "game_picture", "game_pairs", "game_memory", "game_audio",
+    "game_anagram", "game_hangman", "game_missing", "game_speed",
+]
+
 # --- Speaking (голосовой собеседник) ---
 # Мозг — Claude. Голос — ElevenLabs. Ключи только из окружения (.env), не в коде.
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
