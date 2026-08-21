@@ -31,6 +31,19 @@ def _day_start() -> datetime:
     return datetime(d.year, d.month, d.day)
 
 
+def _plural(n: int, one: str, few: str, many: str) -> str:
+    """Русское склонение числительных: 1 слово, 2-4 слова, 5 слов."""
+    nn = abs(n) % 100
+    if 11 <= nn <= 14:
+        return many
+    d = nn % 10
+    if d == 1:
+        return one
+    if 2 <= d <= 4:
+        return few
+    return many
+
+
 def _did_today(db: Session, user_id: int, module: str) -> bool:
     return (db.query(ConvSession)
             .filter(ConvSession.user_id == user_id, ConvSession.module == module,
@@ -60,11 +73,12 @@ def _build_steps(db: Session, user) -> list[dict]:
     n = daily_norms(db, user)   # нормы по уровню + рост со временем
     steps = [
         {"key": "cards", "icon": "🗂", "name": "Карточки",
-         "desc": f"Повтори {n['cards']} слов", "url": "/study",
-         "done": reviews_today >= n["cards"]},
+         "desc": f"Повтори {n['cards']} {_plural(n['cards'], 'слово', 'слова', 'слов')}",
+         "url": "/study", "done": reviews_today >= n["cards"]},
         {"key": "grammar", "icon": "📚", "name": "Грамматика",
-         "desc": f"Теория + {n['grammar']} упражнений", "url": "/grammar",
-         "done": _did_today(db, user.id, "grammar")},
+         "desc": f"Теория + {n['grammar']} "
+                 f"{_plural(n['grammar'], 'упражнение', 'упражнения', 'упражнений')}",
+         "url": "/grammar", "done": _did_today(db, user.id, "grammar")},
         {"key": "reading", "icon": "📖", "name": "Чтение",
          "desc": "Один короткий текст", "url": "/reading",
          "done": _did_today(db, user.id, "reading")},
@@ -74,19 +88,22 @@ def _build_steps(db: Session, user) -> list[dict]:
                       "desc": "Послушать и вставить слова", "url": "/listening",
                       "done": _did_today(db, user.id, "listening")})
     steps.append({"key": "writing", "icon": "✍️", "name": "Письмо",
-                  "desc": f"Написать не меньше {n['write_words']} слов", "url": "/writing",
-                  "done": _did_today(db, user.id, "writing_done")})
+                  "desc": f"Написать не меньше {n['write_words']} "
+                          f"{_plural(n['write_words'], 'слова', 'слов', 'слов')}",
+                  "url": "/writing", "done": _did_today(db, user.id, "writing_done")})
     if speaking_enabled():
         steps.append({"key": "speaking", "icon": "🎤", "name": "Разговор",
-                      "desc": f"Хотя бы {n['speak_turns']} реплик", "url": "/speaking",
-                      "done": _did_today(db, user.id, "speaking_done")})
+                      "desc": f"Хотя бы {n['speak_turns']} "
+                              f"{_plural(n['speak_turns'], 'реплика', 'реплики', 'реплик')}",
+                      "url": "/speaking", "done": _did_today(db, user.id, "speaking_done")})
     if _has_video(db, user):   # видео — только если для уровня есть ролик
         steps.append({"key": "video", "icon": "🎬", "name": "Видео",
                       "desc": "Ролик + пропущенные слова", "url": "/video",
                       "done": _did_today(db, user.id, "video")})
     steps.append({"key": "test", "icon": "✅", "name": "Финальный тест",
-                  "desc": f"{n['test']} вопросов по словам", "url": "/lesson/test",
-                  "done": _did_today(db, user.id, "lesson_test")})
+                  "desc": f"{n['test']} {_plural(n['test'], 'вопрос', 'вопроса', 'вопросов')} "
+                          f"по словам",
+                  "url": "/lesson/test", "done": _did_today(db, user.id, "lesson_test")})
     return steps
 
 
