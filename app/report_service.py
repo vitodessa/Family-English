@@ -5,7 +5,7 @@
 """
 
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 
@@ -15,7 +15,7 @@ from app.config import (
     TELEGRAM_CHAT_ID,
     reporting_enabled,
 )
-from app.models import LearningEvent, Mistake
+from app.models import LearningEvent, Mistake, User
 from app.models import Session as ConvSession
 
 _CAT_RU = {
@@ -38,11 +38,19 @@ def _modules_today(db, user_id: int) -> set[str]:
 
 
 def _reviews_today(db, user_id: int) -> tuple[int, int]:
+    return _reviews_since(db, user_id, _day_start())
+
+
+def _reviews_since(db, user_id: int, since: datetime) -> tuple[int, int]:
     q = db.query(LearningEvent).filter(LearningEvent.user_id == user_id,
-                                       LearningEvent.reviewed_at >= _day_start())
+                                       LearningEvent.reviewed_at >= since)
     total = q.count()
     good = q.filter(LearningEvent.rating >= 3).count()
     return total, good
+
+
+def _students(db):
+    return db.query(User).filter(User.is_admin == False).order_by(User.id).all()  # noqa: E712
 
 
 def lesson_complete(db, user_id: int) -> bool:
@@ -85,7 +93,61 @@ def build_daily_report(db, user) -> str:
     ]
     if mistakes:
         lines += ["", f"✍️ Ошибок сегодня: {len(mistakes)}" + (f" · {top}" if top else "")]
+
+    # обогащение из аналитики: серия, слова в памяти, западающие слова
+    from app.analytics import user_analytics
+    a = user_analytics(db, user)
+    lines += ["", f"🔥 Серия: {a['streak']} дн.  ·  🧠 в памяти: {a['learned']} слов"]
+    if a["weak"]:
+        lines += ["⚠️ Западают: " + ", ".join(w["front"] for w in a["weak"][:2])]
     return "\n".join(lines)
+
+
+def build_evening_status(db) -> str:
+    """Вечерний срез по всей семье: кто прошёл урок, кто занимался, кто нет."""
+    lines = [f"🌙 <b>Итоги дня</b> ({datetime.utcnow():%d.%m})", ""]
+    for u in _students(db):
+        reviews, good = _reviews_today(db, u.id)
+        if lesson_complete(db, u.id):
+            pct = round(good / reviews * 100) if reviews else 0
+            lines.append(f"✅ {u.name} — урок пройден ({reviews} повт., верно {pct}%)")
+        elif reviews > 0:
+            lines.append(f"🔸 {u.name} — занимался, урок не завершён ({reviews} повт.)")
+        else:
+            lines.append(f"⬜️ {u.name} — сегодня не занимался")
+    return "\n".join(lines)
+
+
+def build_weekly_digest(db) -> str:
+    """Итоги недели по каждому ученику — из накопленной аналитики."""
+    from app.analytics import user_analytics
+    since = datetime.utcnow() - timedelta(days=7)
+    lines = [f"📅 <b>Итоги недели</b> ({datetime.utcnow():%d.%m})"]
+    for u in _students(db):
+        tot, good = _reviews_since(db, u.id, since)
+        pct = round(good / tot * 100) if tot else 0
+        a = user_analytics(db, u)
+        lines += ["", f"👤 <b>{u.name}</b> · {u.cefr_level}"]
+        lines.append("   Повторений за неделю: "
+                     + (f"{tot} (верно {pct}%)" if tot else "0 — не занимался"))
+        lines.append(f"   🧠 в памяти: {a['learned']} слов  ·  🔥 серия {a['streak']} дн.")
+        if a["weak"]:
+            lines.append("   ⚠️ западают: " + ", ".join(w["front"] for w in a["weak"][:3]))
+    return "\n".join(lines)
+
+
+def run_evening(db) -> bool:
+    """Плановое: вечерний статус семьи (в т.ч. «не занимался»)."""
+    if not reporting_enabled():
+        return False
+    return send_telegram(build_evening_status(db))
+
+
+def run_weekly(db) -> bool:
+    """Плановое: недельный дайджест."""
+    if not reporting_enabled():
+        return False
+    return send_telegram(build_weekly_digest(db))
 
 
 def send_telegram(text: str) -> bool:
