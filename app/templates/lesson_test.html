@@ -18,6 +18,9 @@
       <input type="radio" name="q{{ qi }}" value="{{ opt }}" required> {{ opt }}
     </label>
     {% endfor %}
+    <label class="test-opt test-dk">
+      <input type="radio" name="q{{ qi }}" value=""> Не знаю 🤷
+    </label>
   </div>
   {% endfor %}
   <button class="btn primary big-btn" type="submit">Проверить</button>
