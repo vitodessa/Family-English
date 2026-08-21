@@ -6,46 +6,37 @@
   <p class="muted">Разные способы тренировать слова — в игровой форме.</p>
 </section>
 
+<div class="lesson-banner">
+  <div>
+    <div class="lb-title">🎮 Игры урока: {{ done }} / {{ total }}</div>
+    <div class="lb-sub">{% if all_done %}Все игры пройдены сегодня — молодец!{% else %}Проходи по одной — веду по потоку.{% endif %}</div>
+  </div>
+  {% if all_done %}
+    <a class="btn big-btn" href="/lesson/next">Дальше по уроку →</a>
+  {% else %}
+    <a class="btn big-btn" href="/games/next">Следующая игра →</a>
+  {% endif %}
+</div>
+
 <div class="read-list">
-  <a class="read-card" href="/games/spell">
-    <span class="rc-title">🔤 Собери слово</span>
-    <span class="rc-snippet">Составь слово из букв по картинке</span>
+  {% macro card(key, url, icon, name, sub) %}
+  <a class="read-card{% if key in played %} game-done{% endif %}" href="{{ url }}">
+    <span class="rc-title">{% if key in played %}✅ {% else %}{{ icon }} {% endif %}{{ name }}</span>
+    <span class="rc-snippet">{{ sub }}</span>
   </a>
+  {% endmacro %}
+  {{ card('spell', '/games/spell', '🔤', 'Собери слово', 'Составь слово из букв по картинке') }}
   <a class="read-card" href="/challenge">
     <span class="rc-title">🎯 Челлендж</span>
-    <span class="rc-snippet">Тест с жизнями ❤️❤️❤️</span>
+    <span class="rc-snippet">Тест с жизнями ❤️❤️❤️ (не входит в зачёт игр)</span>
   </a>
-  <a class="read-card" href="/games/picture">
-    <span class="rc-title">🖼 Слово и картинка</span>
-    <span class="rc-snippet">Угадай слово по картинке</span>
-  </a>
-  <a class="read-card" href="/games/pairs">
-    <span class="rc-title">🧩 Пары</span>
-    <span class="rc-snippet">Соедини слово с переводом</span>
-  </a>
-  <a class="read-card" href="/games/audio">
-    <span class="rc-title">🔊 Аудио</span>
-    <span class="rc-snippet">Услышал слово — выбери его</span>
-  </a>
-  <a class="read-card" href="/games/anagram">
-    <span class="rc-title">🔀 Анаграмма</span>
-    <span class="rc-snippet">Собери слово из перемешанных букв</span>
-  </a>
-  <a class="read-card" href="/games/hangman">
-    <span class="rc-title">🎯 Виселица</span>
-    <span class="rc-snippet">Угадай слово по буквам</span>
-  </a>
-  <a class="read-card" href="/games/missing">
-    <span class="rc-title">🔤 Пропущенная буква</span>
-    <span class="rc-snippet">Какая буква потерялась?</span>
-  </a>
-  <a class="read-card" href="/games/speed">
-    <span class="rc-title">⏱ На скорость</span>
-    <span class="rc-snippet">Успей за 60 секунд</span>
-  </a>
-  <a class="read-card" href="/games/memory">
-    <span class="rc-title">🧠 Мемори</span>
-    <span class="rc-snippet">Найди пары слово — перевод</span>
-  </a>
+  {{ card('picture', '/games/picture', '🖼', 'Слово и картинка', 'Угадай слово по картинке') }}
+  {{ card('pairs', '/games/pairs', '🧩', 'Пары', 'Соедини слово с переводом') }}
+  {{ card('audio', '/games/audio', '🔊', 'Аудио', 'Услышал слово — выбери его') }}
+  {{ card('anagram', '/games/anagram', '🔀', 'Анаграмма', 'Собери слово из перемешанных букв') }}
+  {{ card('hangman', '/games/hangman', '🎯', 'Виселица', 'Угадай слово по буквам') }}
+  {{ card('missing', '/games/missing', '🔤', 'Пропущенная буква', 'Какая буква потерялась?') }}
+  {{ card('speed', '/games/speed', '⏱', 'На скорость', 'Успей за 60 секунд') }}
+  {{ card('memory', '/games/memory', '🧠', 'Мемори', 'Найди пары слово — перевод') }}
 </div>
 {% endblock %}

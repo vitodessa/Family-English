@@ -7,6 +7,7 @@
 import json
 import random
 import string
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -14,15 +15,30 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.activity import touch_session
+from app.config import GAME_MODULES
 from app.database import get_db
 from app.deps import get_current_user
 from app.emoji_map import emoji_for
 from app.models import Card
+from app.models import Session as ConvSession
 from app.pictograms import has_pictogram
 from app.templating import render
 from app.token_service import award_game
 
 router = APIRouter()
+
+# Ключи игр (spell, picture, …) в порядке прохождения — из GAME_MODULES (game_spell → spell).
+GAME_ORDER = [m[len("game_"):] for m in GAME_MODULES]
+
+
+def _games_played_today(db: Session, user_id: int) -> set:
+    """Ключи игр, пройденных сегодня (для потока «следующая игра» и прогресса)."""
+    d = datetime.utcnow().date()
+    day = datetime(d.year, d.month, d.day)
+    rows = (db.query(ConvSession.module)
+            .filter(ConvSession.user_id == user_id, ConvSession.module.in_(GAME_MODULES),
+                    ConvSession.started_at >= day).all())
+    return {m[len("game_"):] for (m,) in rows}
 
 SPELL_ROUNDS = 8
 PICTURE_ROUNDS = 8
@@ -77,7 +93,21 @@ def games_home(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=302)
-    return render(request, "games.html", db=db)
+    played = _games_played_today(db, user.id)
+    return render(request, "games.html", db=db,
+                  played=list(played), done=len(played), total=len(GAME_ORDER),
+                  all_done=len(played) >= len(GAME_ORDER))
+
+
+@router.get("/games/next")
+def games_next(request: Request, db: Session = Depends(get_db)):
+    """Следующая непройденная сегодня игра; когда все пройдены — дальше по уроку."""
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    played = _games_played_today(db, user.id)
+    nxt = next((g for g in GAME_ORDER if g not in played), None)
+    return RedirectResponse(f"/games/{nxt}" if nxt else "/lesson/next", status_code=303)
 
 
 def _spell_rounds(db: Session, user, n: int) -> list[dict]:
