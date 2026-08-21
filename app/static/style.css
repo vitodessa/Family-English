@@ -25,6 +25,7 @@ h1{font-size:2rem;margin:0 0 6px}
 .center{text-align:center}
 .error{background:#fdecec;color:#b3261e;padding:10px 14px;border-radius:10px}
 .ok{background:#e7f7ee;color:#1c7a4b;padding:10px 14px;border-radius:10px;font-weight:600}
+.warn{background:#fff4e0;color:#9a5b00;padding:10px 14px;border-radius:10px;font-weight:600}
 code{background:#eef0f7;padding:2px 6px;border-radius:6px;font-size:.92em}
 textarea{width:100%;padding:11px 12px;margin-top:6px;border:1px solid var(--line);
   border-radius:10px;font-size:1rem;font-family:inherit;background:#fff;resize:vertical}

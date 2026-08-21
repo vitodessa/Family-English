@@ -199,23 +199,26 @@ def top_up_deck(db: Session, user: User) -> int:
     return _add_cards_from_sequence(db, user, learning_sequence(db, user), TOPUP_CARDS)
 
 
-def add_words_for_user(db: Session, user: User, raw_text: str) -> int:
+def add_words_detailed(db: Session, user: User, raw_text: str) -> dict:
     """Массовый ввод слов из уроков EnglishDom.
 
-    Принимает текст, по строке на слово в формате `слово | перевод`
-    (разделитель | или таб). Создаёт слово в каталоге (уровень ученика),
-    если его ещё нет, и сразу карточку этому ученику. Возвращает число добавленных.
+    По строке на слово в формате `слово | перевод` (разделитель `|`, таб или ` - `).
+    Создаёт слово в каталоге (уровень ученика), если его ещё нет, и сразу карточку.
+    Возвращает разбивку `{"added", "dup", "bad", "seen"}`:
+    добавлено / уже было в колоде / без разделителя / всего непустых строк —
+    чтобы страница могла внятно сказать, почему добавилось 0.
     """
     have_fronts = {
         c.front.lower() for c in db.query(Card).filter(Card.user_id == user.id).all()
     }
     level = (user.cefr_level or "A1").upper()
-    created = 0
+    added = dup = bad = seen = 0
 
     for raw in raw_text.splitlines():
         line = raw.strip()
         if not line:
             continue
+        seen += 1
         if "|" in line:
             front, _, back = line.partition("|")
         elif "\t" in line:
@@ -223,9 +226,14 @@ def add_words_for_user(db: Session, user: User, raw_text: str) -> int:
         elif " - " in line:
             front, _, back = line.partition(" - ")
         else:
+            bad += 1
             continue
         front, back = front.strip(), back.strip()
-        if not front or not back or front.lower() in have_fronts:
+        if not front or not back:
+            bad += 1
+            continue
+        if front.lower() in have_fronts:
+            dup += 1
             continue
 
         word = (
@@ -253,8 +261,13 @@ def add_words_for_user(db: Session, user: User, raw_text: str) -> int:
             )
         )
         have_fronts.add(front.lower())
-        created += 1
+        added += 1
 
-    if created:
+    if added:
         db.commit()
-    return created
+    return {"added": added, "dup": dup, "bad": bad, "seen": seen}
+
+
+def add_words_for_user(db: Session, user: User, raw_text: str) -> int:
+    """Обёртка: только число добавленных (для reading — тап слова в каталог)."""
+    return add_words_detailed(db, user, raw_text)["added"]

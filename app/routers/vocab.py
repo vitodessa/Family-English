@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Card
-from app.seed import add_words_for_user
+from app.seed import add_words_detailed
 from app.templating import render
 
 router = APIRouter()
@@ -32,9 +32,9 @@ def my_words_add(
     if not user:
         return RedirectResponse("/login", status_code=302)
 
-    added = add_words_for_user(db, user, words)
+    result = add_words_detailed(db, user, words)
     total = db.query(Card).filter(Card.user_id == user.id).count()
     return render(
         request, "my_words.html", db=db, total=total,
-        added=added,
+        result=result,
     )
