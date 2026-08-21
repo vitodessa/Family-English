@@ -368,6 +368,14 @@ a.mod:hover .ico{transform:scale(1.15) rotate(-4deg)}
 .mem-card.flipped{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;line-height:1.05}
 .mem-card .game-pic-sm{width:40px;height:40px}
+/* срез знаний — полоски результата по уровням */
+.place-bars{max-width:360px;margin:14px auto 0;display:flex;flex-direction:column;gap:8px}
+.pb-row{display:flex;align-items:center;gap:10px}
+.pb-lv{width:32px;font-weight:700}
+.pb-track{flex:1;height:12px;background:var(--line,#e6e6ef);border-radius:8px;overflow:hidden}
+.pb-fill{display:block;height:100%;background:linear-gradient(90deg,#7c5cff,#57c785)}
+.pb-num{width:44px;text-align:right;color:var(--muted,#888);font-size:.9rem}
+.lvl-select{padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ddd);font-size:1rem;margin-left:6px}
 .quiz .hint{text-align:center;color:var(--muted);margin:10px 0 2px}
 .quiz .prompt{font-size:2.2rem;font-weight:700;text-align:center;margin:6px 0 22px;
   display:flex;align-items:center;justify-content:center;gap:12px}

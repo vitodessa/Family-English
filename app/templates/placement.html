@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Срез знаний — {{ app_title }}{% endblock %}
+{% block content %}
+<div class="read-head"><a class="btn" href="/dashboard">← Кабинет</a></div>
+<h1>Срез знаний 🎯</h1>
+<p class="muted">Выбирай перевод. Где начнёшь ошибаться — оттуда и стартуем. Не угадывай:
+  честный результат = правильный старт.</p>
+
+{% if not has_questions %}
+  <div class="form-card"><p class="muted">Словарь ещё не загружен.</p></div>
+{% else %}
+<div id="game" class="quiz" data-questions='{{ questions_json }}'>
+  <div class="chal-hud"><span class="chal-progress" id="progress"></span></div>
+  <div class="prompt"><span id="word"></span>
+    <button type="button" id="audio" class="audio-btn" title="Послушать">🔊</button></div>
+  <div id="options"></div>
+</div>
+
+<div id="result" class="chal-end" hidden>
+  <div class="big">🎯</div>
+  <h2>Твой старт: <span id="rec-level"></span></h2>
+  <p class="muted" id="rec-note"></p>
+  <div class="place-bars" id="bars"></div>
+  <form method="post" action="/placement/apply" class="cta" style="justify-content:center;align-items:center;gap:10px;margin-top:18px">
+    <label class="muted">Начать с уровня:
+      <select name="level" id="lvl" class="lvl-select"></select>
+    </label>
+    <button class="btn primary big-btn" type="submit">Применить и учиться</button>
+  </form>
+  <div class="cta" style="justify-content:center"><a class="btn" href="/placement">Пройти заново</a></div>
+</div>
+
+<script>
+(function(){
+  const LEVELS = {{ levels|tojson }};
+  const PASS = {{ pass_pct }} / 100;
+  const qs = JSON.parse(document.getElementById('game').dataset.questions || '[]');
+  const gEl=document.getElementById('game'), resEl=document.getElementById('result');
+  const progEl=document.getElementById('progress'), wordEl=document.getElementById('word');
+  const optsEl=document.getElementById('options'), audioBtn=document.getElementById('audio');
+  const stats={}; LEVELS.forEach(l=>stats[l]={ok:0,n:0});
+  let i=0, locked=false;
+  const norm=s=>(s||'').trim().toLowerCase();
+
+  function speak(w){ try{ const u=new SpeechSynthesisUtterance(w); u.lang='en-US';
+    const en=(speechSynthesis.getVoices()||[]).find(v=>/^en/i.test(v.lang)); if(en)u.voice=en;
+    speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+
+  function render(){
+    locked=false; const q=qs[i];
+    progEl.textContent=(i+1)+' / '+qs.length;
+    wordEl.textContent=q.word;
+    audioBtn.onclick=()=>speak(q.word);
+    optsEl.innerHTML='';
+    q.options.forEach(opt=>{
+      const b=document.createElement('button'); b.type='button'; b.className='opt';
+      b.innerHTML=opt+'<span class="mark"></span>';
+      b.onclick=()=>choose(b,opt,q); optsEl.appendChild(b);
+    });
+  }
+  function choose(btn,opt,q){
+    if(locked) return; locked=true;
+    const ok=norm(opt)===norm(q.correct);
+    stats[q.level].n++; if(ok) stats[q.level].ok++;
+    Array.from(optsEl.children).forEach(b=>{ b.disabled=true;
+      if(norm(b.textContent)===norm(q.correct)) b.classList.add('correct'); });
+    if(!ok){ btn.classList.add('wrong'); btn.querySelector('.mark').textContent='✗'; }
+    else btn.querySelector('.mark').textContent='✓';
+    setTimeout(()=>{ i++; if(i>=qs.length) finish(); else render(); }, ok?450:750);
+  }
+  function finish(){
+    gEl.hidden=true; resEl.hidden=false; window.confetti&&confetti(); window.sfx&&sfx.win();
+    // рекомендация: первый уровень, где узнавание ниже порога; иначе — верхний
+    let rec=LEVELS[LEVELS.length-1];
+    for(const l of LEVELS){ const s=stats[l]; if(s.n && s.ok/s.n < PASS){ rec=l; break; } }
+    document.getElementById('rec-level').textContent=rec;
+    document.getElementById('rec-note').textContent=
+      'На этом уровне ещё есть что подтянуть — начнём отсюда, ниже пойдёт легко.';
+    // полоски по уровням
+    const bars=document.getElementById('bars');
+    bars.innerHTML=LEVELS.map(l=>{ const s=stats[l], pct=s.n?Math.round(100*s.ok/s.n):0;
+      return '<div class="pb-row"><span class="pb-lv">'+l+'</span>'
+        +'<span class="pb-track"><span class="pb-fill" style="width:'+pct+'%"></span></span>'
+        +'<span class="pb-num">'+s.ok+'/'+s.n+'</span></div>'; }).join('');
+    // селект уровней, по умолчанию — рекомендованный
+    const sel=document.getElementById('lvl');
+    sel.innerHTML=LEVELS.map(l=>'<option value="'+l+'"'+(l===rec?' selected':'')+'>'+l+'</option>').join('');
+  }
+  speechSynthesis && speechSynthesis.getVoices();
+  render();
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -13,7 +13,7 @@ from app.database import Base, SessionLocal, engine, get_db
 from app.deps import get_current_user
 from app.routers import (
     achievements, admin, auth, challenge, checklist, family, games, grammar, lesson, listening,
-    pics, reading, speaking, study, tokens, vocab, video, writing,
+    pics, placement, reading, speaking, study, tokens, vocab, video, writing,
 )
 from app.seed import ensure_admin, ensure_grammar_topics, seed_words
 from app.templating import render
@@ -42,6 +42,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), na
 
 app.include_router(auth.router)
 app.include_router(pics.router)
+app.include_router(placement.router)
 app.include_router(study.router)
 app.include_router(vocab.router)
 app.include_router(speaking.router)
