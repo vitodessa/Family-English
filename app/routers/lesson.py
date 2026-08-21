@@ -50,6 +50,14 @@ def _did_today(db: Session, user_id: int, module: str) -> bool:
                     ConvSession.started_at >= _day_start()).first()) is not None
 
 
+def _did_game_today(db: Session, user_id: int) -> bool:
+    """Сыграл ли сегодня хотя бы в одну игру (любой модуль game_*)."""
+    return (db.query(ConvSession)
+            .filter(ConvSession.user_id == user_id,
+                    ConvSession.module.like("game_%"),
+                    ConvSession.started_at >= _day_start()).first()) is not None
+
+
 def _allowed_levels(user) -> list:
     """Уровень ученика и ниже — для подбора контента."""
     try:
@@ -96,10 +104,18 @@ def _build_steps(db: Session, user) -> list[dict]:
                       "desc": f"Хотя бы {n['speak_turns']} "
                               f"{_plural(n['speak_turns'], 'реплика', 'реплики', 'реплик')}",
                       "url": "/speaking", "done": _did_today(db, user.id, "speaking_done")})
-    if _has_video(db, user):   # видео — только если для уровня есть ролик
-        steps.append({"key": "video", "icon": "🎬", "name": "Видео",
-                      "desc": "Ролик + пропущенные слова", "url": "/video",
-                      "done": _did_today(db, user.id, "video")})
+    steps.append({"key": "games", "icon": "🎮", "name": "Игры",
+                  "desc": "Сыграй хотя бы в одну игру", "url": "/games",
+                  "done": _did_game_today(db, user.id)})
+    # Видео всегда в уроке: обязателен, если для уровня есть ролик; иначе — бонус с подсказкой
+    has_v = _has_video(db, user)
+    video_step = {"key": "video", "icon": "🎬", "name": "Видео",
+                  "desc": "Ролик + пропущенные слова" if has_v
+                          else "Добавьте ролик на странице «Видео»",
+                  "url": "/video", "done": _did_today(db, user.id, "video")}
+    if not has_v:
+        video_step["optional"] = True
+    steps.append(video_step)
     steps.append({"key": "test", "icon": "✅", "name": "Финальный тест",
                   "desc": f"{n['test']} {_plural(n['test'], 'вопрос', 'вопроса', 'вопросов')} "
                           f"по словам",

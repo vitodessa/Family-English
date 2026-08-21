@@ -93,8 +93,10 @@ def lesson_complete(db, user_id: int) -> bool:
         return False
     mods = _modules_today(db, user_id)
     reviews, _ = _reviews_today(db, user_id)
+    played_game = any(m.startswith("game_") for m in mods)
     return (reviews >= daily_norms(db, user)["cards"]
-            and required_modules(db, user) <= mods)
+            and required_modules(db, user) <= mods
+            and played_game)
 
 
 def build_daily_report(db, user) -> str:
@@ -129,6 +131,7 @@ def build_daily_report(db, user) -> str:
     lines.append(f"{mark('writing_done' in mods)} Письмо")
     if speaking_enabled():
         lines.append(f"{mark('speaking_done' in mods)} Разговор")
+    lines.append(f"{mark(any(m.startswith('game_') for m in mods))} Игры")
     if _has_video(db, user):
         lines.append(f"{mark('video' in mods)} Видео")
     lines.append(f"{mark(test is not None)} Финальный тест"
