@@ -17,6 +17,7 @@
   <div class="speed-bar"><div class="speed-fill" id="bar"></div></div>
   <div class="chal-prompt" id="prompt"></div>
   <div id="options"></div>
+  <button class="btn ghost dk-btn" id="dontknow" type="button">Не знаю 🤷</button>
 </div>
 <div id="end" class="chal-end" hidden>
   <div class="big" id="end-emoji">⏱</div><h2>Время!</h2><p class="muted" id="end-score"></p>
@@ -39,6 +40,11 @@
     promptEl.textContent=r.prompt; optsEl.innerHTML='';
     r.options.forEach(opt=>{ const b=document.createElement('button'); b.type='button'; b.className='opt';
       b.innerHTML=opt+'<span class="mark"></span>'; b.onclick=()=>choose(b,opt,r.correct); optsEl.appendChild(b); });
+    document.getElementById('dontknow').onclick=()=>{
+      if(locked) return; locked=true; answered++;
+      Array.from(optsEl.children).forEach(b=>{ b.disabled=true; if(norm(b.textContent)===norm(r.correct)) b.classList.add('correct'); });
+      setTimeout(()=>{ if(left<=0) return; i++; render(); }, 650);
+    };
   }
   function choose(btn,opt,correct){
     if(locked) return; locked=true; answered++;

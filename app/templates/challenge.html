@@ -18,6 +18,7 @@
   </div>
   <div class="chal-prompt" id="prompt"></div>
   <div id="options"></div>
+  <button class="btn ghost dk-btn" id="dontknow" type="button">Не знаю 🤷</button>
 </div>
 
 <div id="end" class="chal-end" hidden>
@@ -77,6 +78,18 @@
       render();
     }, ok?650:1150);
   }
+
+  document.getElementById('dontknow').onclick=()=>{
+    if(locked) return; locked=true;
+    const correct=data[i].correct;
+    Array.from(optsEl.children).forEach(b=>{ b.disabled=true;
+      if(norm(b.textContent)===norm(correct)) b.classList.add('correct'); });
+    hearts--; streak=0; hud();
+    setTimeout(()=>{
+      if(hearts<=0){ finish(false); return; }
+      i++; if(i>=total){ finish(true); return; } render();
+    }, 1150);
+  };
 
   function finish(won){
     gEl.hidden=true; endEl.hidden=false; if(won){ window.confetti&&confetti(); window.sfx&&sfx.win(); }

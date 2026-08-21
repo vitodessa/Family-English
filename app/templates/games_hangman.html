@@ -15,6 +15,7 @@
   <div class="spell-word-clue center" id="clue"></div>
   <div class="hm-word" id="word"></div>
   <div class="hm-keys" id="keys"></div>
+  <button class="btn ghost dk-btn" id="dontknow" type="button">Не знаю 🤷</button>
   <p class="muted center" id="hint" style="min-height:1.4em"></p>
 </div>
 <div id="end" class="chal-end" hidden>
@@ -67,6 +68,11 @@
     }
   }
   function next(){ i++; if(i>=rounds.length) finish(); else render(); }
+  document.getElementById('dontknow').onclick=()=>{
+    if(locked) return; locked=true;
+    revealed=rounds[i].word.toLowerCase().split(''); renderWord();
+    hint.innerHTML='Слово было: <b>'+rounds[i].word+'</b>'; setTimeout(next,1300);
+  };
   function finish(){ gEl.hidden=true; endEl.hidden=false;
     document.getElementById('end-score').textContent='Отгадано: '+score+' из '+rounds.length;
     fetch('/games/hangman/done',{method:'POST',headers:{'Content-Type':'application/json'},

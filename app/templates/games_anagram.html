@@ -16,6 +16,7 @@
   <div class="center">
     <input type="text" id="ans" autocomplete="off" autocapitalize="off" placeholder="твой ответ" style="max-width:260px;text-align:center">
     <div style="margin-top:10px"><button class="btn primary" id="check" type="button">Проверить</button></div>
+    <button class="btn ghost dk-btn" id="dontknow" type="button">Не знаю 🤷</button>
   </div>
   <p class="muted center" id="hint" style="min-height:1.4em;margin-top:10px"></p>
 </div>
@@ -59,6 +60,11 @@
     fetch('/games/anagram/done',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({solved:score,total:rounds.length})}).catch(()=>{}); }
   document.getElementById('check').onclick=check;
+  document.getElementById('dontknow').onclick=()=>{
+    if(locked) return; locked=true; ans.disabled=true;
+    hint.innerHTML='Слово: <b>'+rounds[i].word+'</b>';
+    setTimeout(next, 1300);
+  };
   ans.addEventListener('keydown',e=>{ if(e.key==='Enter') check(); });
   render();
 })();

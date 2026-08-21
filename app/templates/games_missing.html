@@ -14,6 +14,7 @@
   <div class="miss-word" id="blanked"></div>
   <div class="spell-word-clue center" id="clue"></div>
   <div id="options"></div>
+  <button class="btn ghost dk-btn" id="dontknow" type="button">Не знаю 🤷</button>
 </div>
 <div id="end" class="chal-end" hidden>
   <div class="big">🏆</div><h2>Готово!</h2><p class="muted" id="end-score"></p>
@@ -38,6 +39,11 @@
     optsEl.innerHTML='';
     r.options.forEach(opt=>{ const b=document.createElement('button'); b.type='button'; b.className='opt';
       b.innerHTML=opt+'<span class="mark"></span>'; b.onclick=()=>choose(b,opt,r.correct); optsEl.appendChild(b); });
+    document.getElementById('dontknow').onclick=()=>{
+      if(locked) return; locked=true;
+      Array.from(optsEl.children).forEach(b=>{ b.disabled=true; if(norm(b.textContent)===norm(r.correct)) b.classList.add('correct'); });
+      setTimeout(()=>{ i++; if(i>=rounds.length) finish(); else render(); }, 1000);
+    };
   }
   function choose(btn,opt,correct){
     if(locked) return; locked=true; const ok=norm(opt)===norm(correct);
