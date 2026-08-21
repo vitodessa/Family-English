@@ -146,6 +146,17 @@ def lesson_home(request: Request, db: Session = Depends(get_db)):
                   all_done=all_done, current=current)
 
 
+@router.get("/lesson/next")
+def lesson_next(request: Request, db: Session = Depends(get_db)):
+    """Переход к следующему невыполненному блоку урока (для кнопки «Дальше по уроку»)."""
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    nxt = next((s for s in _build_steps(db, user)
+                if not s.get("optional") and not s["done"]), None)
+    return RedirectResponse(nxt["url"] if nxt else "/lesson", status_code=303)
+
+
 def _test_questions(db: Session, user) -> list[dict]:
     cards = db.query(Card).filter(Card.user_id == user.id).all()
     if len(cards) < 3:
