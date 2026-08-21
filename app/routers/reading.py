@@ -80,7 +80,8 @@ def reading_home(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/login", status_code=302)
 
     items = (db.query(ContentItem)
-             .filter(ContentItem.cefr_level.in_(_allowed_levels(user)))
+             .filter(ContentItem.kind.in_(["text", "phrases"]),   # только тексты чтения
+                     ContentItem.cefr_level.in_(_allowed_levels(user)))
              .order_by(ContentItem.created_at.desc()).limit(50).all())
     return render(request, "reading.html", db=db, items=items, enabled=reading_enabled())
 
@@ -150,7 +151,7 @@ def reading_item(item_id: int, request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse("/login", status_code=302)
     item = db.query(ContentItem).filter(ContentItem.id == item_id).first()
-    if not item:
+    if not item or item.kind not in ("text", "phrases"):   # аудио/видео сюда не открываем
         return RedirectResponse("/reading", status_code=302)
 
     if item.kind == "phrases":
