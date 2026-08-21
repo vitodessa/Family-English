@@ -76,6 +76,20 @@ def send_report(user_id: int, request: Request, db: Session = Depends(get_db)):
     return RedirectResponse("/admin", status_code=302)
 
 
+@router.post("/admin/reset-password/{user_id}")
+def reset_password(user_id: int, request: Request,
+                   new_password: str = Form(...), db: Session = Depends(get_db)):
+    """Сброс пароля ученику: админ задаёт новый пароль (пароли хешируются, старый не читается)."""
+    if not _require_admin(request, db):
+        return RedirectResponse("/login", status_code=302)
+    target = db.query(User).filter(User.id == user_id).first()
+    pw = (new_password or "").strip()
+    if target and len(pw) >= 4:
+        target.password_hash = hash_password(pw)
+        db.commit()
+    return RedirectResponse("/admin", status_code=303)
+
+
 @router.post("/admin/cashout/{user_id}")
 def cashout(user_id: int, request: Request, db: Session = Depends(get_db)):
     """Обмен токенов ученика на деньги: обнуляет баланс, пишет операцию в журнал."""

@@ -4,7 +4,7 @@
 <div class="read-head" style="justify-content:flex-end"><a class="btn primary" href="/admin/analytics">📊 Аналитика обучения</a></div>
 <h1>Семья</h1>
 <table class="tbl">
-  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>🪙 Токены</th><th>Роль</th><th>Отчёт</th></tr></thead>
+  <thead><tr><th>Имя</th><th>Уровень</th><th>Слов</th><th>Повторений</th><th>🪙 Токены</th><th>Роль</th><th>Пароль</th><th>Отчёт</th></tr></thead>
   <tbody>
     {% for r in rows %}
     <tr>
@@ -22,6 +22,15 @@
         {% endif %}
       </td>
       <td>{{ "админ" if r.user.is_admin else "ученик" }}</td>
+      <td>
+        <form method="post" action="/admin/reset-password/{{ r.user.id }}"
+              style="margin:0;display:flex;gap:4px"
+              onsubmit="return confirm('Сменить пароль для {{ r.user.name }}?')">
+          <input name="new_password" type="text" placeholder="новый пароль" required minlength="4"
+                 autocomplete="off" style="width:120px;padding:4px 6px;font-size:.85rem">
+          <button class="btn ghost" type="submit" style="padding:4px 8px;font-size:.85rem">🔑</button>
+        </form>
+      </td>
       <td>
         <form method="post" action="/admin/send-report/{{ r.user.id }}" style="margin:0">
           <button class="btn ghost" type="submit" {% if not reporting %}disabled title="Не настроен Telegram"{% endif %}>📤 Отчёт</button>
