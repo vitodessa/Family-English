@@ -7,14 +7,13 @@
 import json
 import random
 import string
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.activity import touch_session
+from app.activity import round_start, touch_session
 from app.config import GAME_MODULES
 from app.database import get_db
 from app.deps import get_current_user
@@ -32,12 +31,10 @@ GAME_ORDER = [m[len("game_"):] for m in GAME_MODULES]
 
 
 def _games_played_today(db: Session, user_id: int) -> set:
-    """Ключи игр, пройденных сегодня (для потока «следующая игра» и прогресса)."""
-    d = datetime.utcnow().date()
-    day = datetime(d.year, d.month, d.day)
+    """Ключи игр, пройденных в ТЕКУЩЕМ занятии (круге) — для потока «следующая игра» и прогресса."""
     rows = (db.query(ConvSession.module)
             .filter(ConvSession.user_id == user_id, ConvSession.module.in_(GAME_MODULES),
-                    ConvSession.started_at >= day).all())
+                    ConvSession.started_at >= round_start(db, user_id)).all())
     return {m[len("game_"):] for (m,) in rows}
 
 SPELL_ROUNDS = 8

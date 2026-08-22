@@ -8,8 +8,16 @@
     {% elif total and correct >= (total * 0.6) %}Хорошо!
     {% else %}Есть над чем поработать.{% endif %}
   </p>
-  {% if tokens %}<div class="token-reward">🪙 +{{ tokens }} токенов за урок!</div>{% endif %}
+  {% if tokens %}<div class="token-reward">🪙 +{{ tokens }} токенов за занятие!</div>{% endif %}
   {% if report_sent %}<div class="ok" style="display:inline-block">📤 Отчёт родителю отправлен</div>{% endif %}
+  {% if complete %}
+    <div class="fb-card" style="margin-top:12px">✅ Занятие засчитано!
+      {% if lessons_done %}Сегодня пройдено занятий: <b>{{ lessons_done }}</b> 🔥{% endif %}
+      Можно сразу начать следующее — занятий в день сколько угодно.</div>
+  {% else %}
+    <div class="warn" style="margin-top:12px">Тест пройден, но занятие ещё не завершено —
+      остались невыполненные блоки. Вернись к уроку и добей их.</div>
+  {% endif %}
 </section>
 
 <div class="card">
@@ -27,7 +35,11 @@
 </div>
 
 <div class="cta" style="justify-content:flex-start;margin-top:22px">
-  <a class="btn primary" href="/lesson">← К уроку</a>
+  {% if complete %}
+    <a class="btn primary" href="/lesson">🚀 Начать следующее занятие →</a>
+  {% else %}
+    <a class="btn primary" href="/lesson">← Вернуться к уроку</a>
+  {% endif %}
   <a class="btn" href="/dashboard">В кабинет</a>
 </div>
 {% if tokens %}<script>window.confetti&&confetti(); window.sfx&&sfx.win();</script>{% endif %}

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.activity import touch_session
+from app.activity import lessons_today, record_lesson_done, round_start, touch_session
 from app.config import (
     CEFR_ORDER, GAME_MODULES, LESSON_CARDS, listening_enabled, speaking_enabled,
 )
@@ -47,17 +47,18 @@ def _plural(n: int, one: str, few: str, many: str) -> str:
 
 
 def _did_today(db: Session, user_id: int, module: str) -> bool:
+    """Выполнен ли модуль в рамках ТЕКУЩЕГО занятия (круга), а не всего дня."""
     return (db.query(ConvSession)
             .filter(ConvSession.user_id == user_id, ConvSession.module == module,
-                    ConvSession.started_at >= _day_start()).first()) is not None
+                    ConvSession.started_at >= round_start(db, user_id)).first()) is not None
 
 
 def _games_done_today(db: Session, user_id: int) -> int:
-    """Сколько РАЗНЫХ игр из раздела пройдено сегодня (для блока «пройти все игры»)."""
+    """Сколько РАЗНЫХ игр пройдено в текущем занятии (для блока «пройти все игры»)."""
     rows = (db.query(ConvSession.module)
             .filter(ConvSession.user_id == user_id,
                     ConvSession.module.in_(GAME_MODULES),
-                    ConvSession.started_at >= _day_start()).all())
+                    ConvSession.started_at >= round_start(db, user_id)).all())
     return len({m for (m,) in rows})
 
 
@@ -80,7 +81,7 @@ def _has_video(db: Session, user) -> bool:
 def _build_steps(db: Session, user) -> list[dict]:
     reviews_today = (db.query(LearningEvent)
                      .filter(LearningEvent.user_id == user.id,
-                             LearningEvent.reviewed_at >= _day_start()).count())
+                             LearningEvent.reviewed_at >= round_start(db, user.id)).count())
     n = daily_norms(db, user)   # нормы по уровню + рост со временем
     steps = [
         {"key": "cards", "icon": "🗂", "name": "Карточки",
@@ -143,7 +144,8 @@ def lesson_home(request: Request, db: Session = Depends(get_db)):
 
     return render(request, "lesson.html", db=db,
                   steps=steps, done=done_required, total=len(required),
-                  all_done=all_done, current=current)
+                  all_done=all_done, current=current,
+                  lessons_done=lessons_today(db, user.id))
 
 
 @router.get("/lesson/next")
@@ -212,8 +214,15 @@ async def lesson_test_submit(request: Request, db: Session = Depends(get_db)):
     # Урок завершён тестом — награда токенами (если всё пройдено) + отчёт родителю.
     from app.report_service import lesson_complete, maybe_send_report
     from app.token_service import award_lesson
-    tokens = award_lesson(db, user.id) if lesson_complete(db, user.id) else 0
-    sent = maybe_send_report(db, user)
 
+    complete = lesson_complete(db, user.id)   # проверяем ТЕКУЩЕЕ занятие (круг)
+    sent = maybe_send_report(db, user) if complete else False  # отчёт до закрытия круга
+    tokens = 0
+    if complete:
+        record_lesson_done(db, user.id)       # закрыть круг → можно начать следующее занятие
+        tokens = award_lesson(db, user.id)    # токены за КАЖДОЕ занятие (мотивация)
+
+    lessons = lessons_today(db, user.id)
     return render(request, "lesson_test_result.html", db=db,
-                  results=results, correct=correct, total=n, report_sent=sent, tokens=tokens)
+                  results=results, correct=correct, total=n, report_sent=sent,
+                  tokens=tokens, complete=complete, lessons_done=lessons)

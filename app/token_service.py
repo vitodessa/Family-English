@@ -79,11 +79,18 @@ def lesson_streak(db, user_id: int) -> int:
 
 
 def award_lesson(db, user_id: int) -> int:
-    """Начислить за пройденный урок + бонус за серию (один раз в день)."""
-    got = award(db, user_id, LESSON_TOKENS, _LESSON_REASON, once_key=f"lesson:{_today_key()}")
+    """Начислить за КАЖДОЕ пройденное занятие (занятий в день неограниченно) + бонус за серию.
+
+    Токены идут за каждое занятие — это и есть мотивация делать больше.
+    Бонус за серию — один раз в день (по дням, не по занятиям).
+    """
+    from app.activity import lessons_today
+    n = lessons_today(db, user_id)  # включает только что завершённое занятие (≥1)
+    got = award(db, user_id, LESSON_TOKENS, _LESSON_REASON,
+                once_key=f"lesson:{_today_key()}:{n}")
     if not got:
         return 0
-    streak = lesson_streak(db, user_id)  # уже включает сегодня
+    streak = lesson_streak(db, user_id)  # серия по дням — бонус раз в день
     bonus = min(streak, STREAK_CAP)
     if bonus:
         got += award(db, user_id, bonus, f"Серия {streak} дн.", once_key=f"streak:{_today_key()}")

@@ -2,12 +2,15 @@
 {% block title %}Урок дня — {{ app_title }}{% endblock %}
 {% block content %}
 <section class="dash-head">
-  <h1>Урок дня</h1>
-  <p class="muted">Пройди блоки по порядку и заверши тестом. Выполнено {{ done }} / {{ total }}.</p>
+  <h1>Урок дня{% if lessons_done and not all_done %} · занятие №{{ lessons_done + 1 }}{% endif %}</h1>
+  <p class="muted">Пройди блоки по порядку и заверши тестом. Выполнено {{ done }} / {{ total }}.
+    {% if lessons_done %}Сегодня уже пройдено занятий: <b>{{ lessons_done }}</b> 🔥{% endif %}</p>
 </section>
 
 {% if all_done %}
-  <div class="fb-card"><b>🎉 Урок пройден!</b> Отличная работа — возвращайся завтра.</div>
+  <div class="fb-card"><b>🎉 Занятие пройдено!</b>
+    {% if lessons_done %}Сегодня их уже {{ lessons_done }}. {% endif %}
+    Можно сразу начать следующее — занятий в день сколько угодно.</div>
 {% endif %}
 
 <div class="bar" style="margin-bottom:18px">

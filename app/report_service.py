@@ -42,6 +42,12 @@ def _modules_today(db, user_id: int) -> set[str]:
                     ConvSession.started_at >= _day_start()).all()}
 
 
+def _modules_since(db, user_id: int, since: datetime) -> set[str]:
+    return {r.module for r in db.query(ConvSession)
+            .filter(ConvSession.user_id == user_id,
+                    ConvSession.started_at >= since).all()}
+
+
 def _reviews_today(db, user_id: int) -> tuple[int, int]:
     return _reviews_since(db, user_id, _day_start())
 
@@ -88,12 +94,18 @@ def required_modules(db, user) -> set:
 
 
 def lesson_complete(db, user_id: int) -> bool:
-    """Пройдены ли ВСЕ обязательные блоки урока (включая аудирование и разговор) + тест."""
+    """Пройдены ли ВСЕ обязательные блоки ТЕКУЩЕГО занятия (круга) + тест.
+
+    Считается в рамках круга (round_start), чтобы за день можно было пройти
+    несколько занятий подряд. См. [[unlimited-lessons-adaptive-load]].
+    """
+    from app.activity import round_start
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return False
-    mods = _modules_today(db, user_id)
-    reviews, _ = _reviews_today(db, user_id)
+    rs = round_start(db, user_id)
+    mods = _modules_since(db, user_id, rs)
+    reviews, _ = _reviews_since(db, user_id, rs)
     all_games = all(m in mods for m in GAME_MODULES)   # нужно пройти ВСЕ игры
     return (reviews >= daily_norms(db, user)["cards"]
             and required_modules(db, user) <= mods
