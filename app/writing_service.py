@@ -5,7 +5,6 @@ Claude возвращает отзыв + исправленную версию +
 Ошибки и слова сохраняются в «единую память» (см. speaking_service._save_turn).
 """
 
-import json
 import random
 from typing import Any
 
@@ -108,14 +107,11 @@ def _call_claude(dynamic_context: str, student_text: str, max_tokens: int) -> st
 
 
 def _parse(raw: str) -> dict[str, Any]:
-    text = raw.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        text = text[text.find("{"):text.rfind("}") + 1]
-    try:
-        obj = json.loads(text)
-    except (json.JSONDecodeError, ValueError):
-        return {"feedback": "", "corrected": raw.strip(), "mistakes": [], "new_vocab": []}
+    obj = ai_http.extract_json(raw)
+    if not isinstance(obj, dict):
+        # JSON не распарсился — не вываливать сырой текст с JSON в «исправленное»
+        return {"feedback": "", "corrected": ai_http.reply_before_json(raw),
+                "mistakes": [], "new_vocab": []}
     obj.setdefault("feedback", "")
     obj.setdefault("corrected", "")
     obj.setdefault("mistakes", [])

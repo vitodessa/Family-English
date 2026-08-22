@@ -115,14 +115,11 @@ def _call_claude(dynamic_context: str, history: list[dict[str, Any]],
 
 
 def _parse(raw: str) -> dict[str, Any]:
-    text = raw.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        text = text[text.find("{"):text.rfind("}") + 1]
-    try:
-        obj = json.loads(text)
-    except (json.JSONDecodeError, ValueError):
-        return {"reply": raw.strip(), "hint": "", "options": [], "mistakes": [], "new_vocab": []}
+    obj = ai_http.extract_json(raw)
+    if not isinstance(obj, dict):
+        # JSON не распарсился — показать текст без сырого JSON-хвоста
+        return {"reply": ai_http.reply_before_json(raw), "hint": "",
+                "options": [], "mistakes": [], "new_vocab": []}
     obj.setdefault("reply", "")
     obj.setdefault("hint", "")
     obj.setdefault("options", [])

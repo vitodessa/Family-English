@@ -28,14 +28,7 @@ def _call(system: str, user: str, max_tokens: int) -> str:
 
 
 def _parse_json(raw: str) -> dict[str, Any]:
-    text = raw.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        text = text[text.find("{"):text.rfind("}") + 1]
-    try:
-        return json.loads(text)
-    except (json.JSONDecodeError, ValueError):
-        return {}
+    return ai_http.extract_json(raw) or {}
 
 
 def _build_cloze(full: str, answers: list[str]) -> tuple[str, list[str]]:

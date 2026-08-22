@@ -6,11 +6,47 @@
 сервисы (writing/listening/speaking) шлют готовый payload и получают текст.
 """
 
+import json
 import time
 
 import httpx
 
 from app.config import ANTHROPIC_API_KEY
+
+
+def extract_json(raw: str):
+    """Достать JSON-объект из ответа модели.
+
+    Терпит ```-заборы И произвольный текст вокруг: модель иногда пишет реплику
+    прозой, а потом дублирует JSON — берём именно объект (от первой `{` до
+    последней `}`), а не весь сырой текст. Возвращает dict или None.
+    """
+    if not raw:
+        return None
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.strip("`").strip()
+    candidates = [text]
+    i, j = text.find("{"), text.rfind("}")
+    if i != -1 and j > i:
+        candidates.append(text[i:j + 1])
+    for cand in candidates:
+        try:
+            obj = json.loads(cand)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        if isinstance(obj, dict):
+            return obj
+    return None
+
+
+def reply_before_json(raw: str) -> str:
+    """Фолбэк: если JSON не распарсился — показать текст ДО первой `{`, без сырого JSON."""
+    text = (raw or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`").strip()
+    head = text.split("{", 1)[0].strip()
+    return head or text
 
 _URL = "https://api.anthropic.com/v1/messages"
 _HEADERS = {
