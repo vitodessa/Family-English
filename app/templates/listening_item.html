@@ -7,17 +7,8 @@
 </div>
 <h1>{{ item.title }}</h1>
 
-<div class="listen-player" data-full="{{ full }}">
-  <audio id="audio" src="/listening/{{ item.id }}/audio" preload="auto"></audio>
-  <button class="btn primary big-btn" id="play" type="button">▶️ Слушать</button>
-  <label class="muted" style="display:flex;align-items:center;gap:8px;margin:0">Скорость
-    <select id="speed" style="width:auto;margin:0;padding:6px 10px">
-      <option value="0.7" {% if slow %}selected{% endif %}>🐢 медленно</option>
-      <option value="0.85" {% if not slow %}selected{% endif %}>🚶 средне</option>
-      <option value="1.0">🏃 обычно</option>
-    </select>
-  </label>
-</div>
+<div id="listen-player" class="listen-player" data-full="{{ full }}"
+     data-audio="/listening/{{ item.id }}/audio" data-slow="{{ 1 if slow else 0 }}"></div>
 
 <p class="muted">Слушай и впиши пропущенные слова:</p>
 <form method="post" action="/listening/{{ item.id }}/check" class="listen-form">
@@ -39,35 +30,11 @@
   <button class="btn primary big-btn" type="submit" style="margin-top:18px">Проверить</button>
 </form>
 
+<script src="/static/ttsplayer.js?v={{ asset_version }}"></script>
 <script>
 (function(){
-  const audio=document.getElementById('audio'), play=document.getElementById('play'), speed=document.getElementById('speed');
-  const full=document.querySelector('.listen-player').dataset.full||'';
-  let useBrowser=false;                 // фолбэк на голос браузера, если ElevenLabs недоступен
-  function curRate(){ return parseFloat(speed.value)||1; }
-  audio.playbackRate=curRate();
-  audio.onerror=()=>{ useBrowser=true; };
-  audio.onended=()=>{ play.textContent='🔁 Ещё раз'; };
-
-  function speakBrowser(){
-    try{ const u=new SpeechSynthesisUtterance(full); u.lang='en-US'; u.rate=curRate();
-      u.onend=()=>play.textContent='🔁 Ещё раз';
-      speechSynthesis.cancel(); speechSynthesis.speak(u); play.textContent='⏸ Пауза'; }catch(e){}
-  }
-  speed.onchange=()=>{ audio.playbackRate=curRate(); };
-
-  play.onclick=()=>{
-    if(useBrowser){
-      if(speechSynthesis.speaking){ speechSynthesis.cancel(); play.textContent='▶️ Слушать'; }
-      else speakBrowser();
-      return;
-    }
-    audio.playbackRate=curRate();
-    if(audio.paused){
-      audio.play().then(()=>{ play.textContent='⏸ Пауза'; })
-        .catch(()=>{ useBrowser=true; speakBrowser(); });
-    } else { audio.pause(); play.textContent='▶️ Слушать'; }
-  };
+  const el=document.getElementById('listen-player');
+  TTSPlayer.mount(el, {text: el.dataset.full||'', audioSrc: el.dataset.audio, slow: el.dataset.slow==='1'});
 })();
 </script>
 {% endblock %}

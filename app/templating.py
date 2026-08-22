@@ -20,7 +20,12 @@ def _asset_version() -> str:
     скачать свежий CSS после деплоя, а не держать старый из кэша.
     """
     try:
-        data = (BASE_DIR / "app" / "static" / "style.css").read_bytes()
+        static = BASE_DIR / "app" / "static"
+        data = b""
+        for name in ("style.css", "ttsplayer.js"):
+            f = static / name
+            if f.exists():
+                data += f.read_bytes()
         return hashlib.md5(data).hexdigest()[:8]
     except Exception:  # noqa: BLE001
         return "0"

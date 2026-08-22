@@ -312,6 +312,13 @@ a.mod:hover .ico{transform:scale(1.15) rotate(-4deg)}
 
 /* listening (аудирование) */
 .listen-player{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:14px 0 18px}
+.ttsp{margin:14px 0 18px}
+.ttsp-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.ttsp-nav{padding:8px 12px;font-size:1.1rem;line-height:1}
+.ttsp-speed{display:flex;align-items:center;gap:8px;margin:0}
+.ttsp-speed select{width:auto;margin:0;padding:6px 10px}
+.ttsp-prog{margin-top:8px;font-size:.85rem}
+.ttsp-audio{margin-top:10px}
 .cloze-text{font-size:1.2rem;line-height:2.4;background:var(--card);border:1px solid var(--line);
   border-radius:16px;padding:22px;box-shadow:var(--shadow)}
 .blank-inp{display:inline-block;width:120px;margin:0 3px;padding:3px 8px;border:1px solid var(--line);

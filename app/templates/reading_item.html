@@ -7,6 +7,13 @@
 </div>
 <h1>{{ item.title }}</h1>
 
+<div id="read-player" class="listen-player" data-full="{{ item.body }}"></div>
+<script src="/static/ttsplayer.js?v={{ asset_version }}"></script>
+<script>
+(function(){ var el=document.getElementById('read-player');
+  if(el) TTSPlayer.mount(el, {text: el.dataset.full||''}); })();
+</script>
+
 <div id="text" class="reader-text" data-glossary='{{ item.glossary or "{}" }}'>{{ item.body }}</div>
 <p class="muted center" style="margin-top:16px">
   Веди мышкой по словам — перевод всплывает сразу. Кликни — слово уйдёт в карточки на запоминание.
